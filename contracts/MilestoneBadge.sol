@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MilestoneBadge is ERC1155, Ownable {
     mapping(address => mapping(uint256 => bool)) public claimed;
     
-    constructor(string memory uri_) ERC1155(uri_) {}
+    constructor(string memory uri_) ERC1155(uri_) Ownable(msg.sender) {}
     
     function claim(uint256 tokenId) external {
         require(!claimed[msg.sender][tokenId], "Already claimed");

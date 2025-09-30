@@ -22,6 +22,24 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // Simplified webpack config for Next.js 15
@@ -34,6 +52,20 @@ const nextConfig = {
         tls: false,
       };
     }
+    
+    // Ignore React Native dependencies in web build
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+      'react-native': false,
+    };
+    
+    // Ignore React Native modules from being processed
+    config.externals = config.externals || [];
+    config.externals.push({
+      '@react-native-async-storage/async-storage': 'commonjs @react-native-async-storage/async-storage',
+      'react-native': 'commonjs react-native',
+    });
     
     return config;
   },

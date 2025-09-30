@@ -26,7 +26,9 @@ async function main(){
       subtitle:'Primeros pasos en el ecosistema Celo.',
       levelId: principiante.id, categoryId: celo.id,
       isFree:true, visibility:'PUBLIC', status:'PUBLISHED',
-      learners: 1200, rating: 4.8, ratingCount: 100, durationHours: 8, lessonsCount: 30
+      learners: 1200, rating: 4.8, ratingCount: 100, durationHours: 8, lessonsCount: 30,
+      coverUrl: 'https://via.placeholder.com/400x225/FCFF52/000000?text=Introduccion+a+Celo',
+      promoVideoUrl: 'https://www.youtube.com/watch?v=QOCO1G8cJyI'
     }
   })
   
@@ -39,7 +41,8 @@ async function main(){
       subtitle:'Aprende los conceptos básicos de blockchain y Web3.',
       levelId: principiante.id, categoryId: fundamentos.id,
       isFree:true, visibility:'PUBLIC', status:'PUBLISHED',
-      learners: 800, rating: 4.7, ratingCount: 85, durationHours: 6, lessonsCount: 25
+      learners: 800, rating: 4.7, ratingCount: 85, durationHours: 6, lessonsCount: 25,
+      coverUrl: 'https://via.placeholder.com/400x225/4F46E5/FFFFFF?text=Fundamentos+Web3'
     }
   })
   
@@ -52,7 +55,8 @@ async function main(){
       subtitle:'Construye aplicaciones descentralizadas en Celo.',
       levelId: intermedio.id, categoryId: desarrollo.id,
       isFree:true, visibility:'PUBLIC', status:'PUBLISHED',
-      learners: 500, rating: 4.9, ratingCount: 60, durationHours: 12, lessonsCount: 40
+      learners: 500, rating: 4.9, ratingCount: 60, durationHours: 12, lessonsCount: 40,
+      coverUrl: 'https://via.placeholder.com/400x225/10B981/FFFFFF?text=Desarrollo+dApps'
     }
   })
   

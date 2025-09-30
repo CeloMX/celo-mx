@@ -11,25 +11,31 @@ import {
   ChevronDown,
   Globe
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function PrivyLogin() {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const { 
+    isAuthenticated, 
+    isLoading, 
+    user, 
+    wallet, 
+    login, 
+    logout 
+  } = useAuth();
 
-  // Mock address for demo purposes
-  const addr = authenticated ? '0x1234...5678' : '';
-
-  function truncate(a: string) {
-    return a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '';
+  function truncate(address: string) {
+    return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
   }
 
   const copyAddress = async () => {
-    if (!addr) return;
+    if (!wallet.address) return;
     try {
-      await navigator.clipboard.writeText(addr);
+      await navigator.clipboard.writeText(wallet.address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -37,13 +43,13 @@ export default function PrivyLogin() {
     }
   };
 
-  const login = () => {
-    setAuthenticated(true);
-  };
-
-  const logout = () => {
-    setAuthenticated(false);
-    setShowDropdown(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowDropdown(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   // Close dropdown when clicking outside
@@ -60,7 +66,17 @@ export default function PrivyLogin() {
     };
   }, []);
 
-  if (!authenticated) {
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1.5 sm:gap-2 px-4 py-2 bg-transparent text-black dark:text-celo-yellow rounded-full text-[10px] sm:text-xs font-bold border border-celo-border border-[0.7px]">
+        <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <span className="hidden xs:inline">Conectando...</span>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <button 
         onClick={login} 
@@ -88,7 +104,7 @@ export default function PrivyLogin() {
             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse" />
             <div className="absolute inset-0 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-ping opacity-75" />
           </div>
-          <span className="font-mono text-xs text-celo-black dark:text-celo-yellow">{truncate(addr)}</span>
+          <span className="font-mono text-xs text-celo-black dark:text-celo-yellow">{truncate(wallet.address || '')}</span>
         </div>
         <ChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform text-celo-black/70 dark:text-celo-yellow/70 ${showDropdown ? 'rotate-180' : ''}`} />
       </button>
@@ -100,6 +116,27 @@ export default function PrivyLogin() {
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
           
           <div className="relative p-4 sm:p-5 space-y-3 sm:space-y-4">
+            {/* User Info */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-celo-black dark:text-celo-yellow">
+                <User className="w-3 h-3" />
+                <span>Usuario Conectado</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/25 dark:bg-black/25 border border-white/30 dark:border-white/25 backdrop-blur-md">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-celo-yellow to-yellow-500 flex items-center justify-center text-black font-bold text-sm">
+                  {user?.email?.slice(0, 1).toUpperCase() || wallet.address?.slice(2, 4).toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-celo-black dark:text-celo-yellow">
+                    {user?.email || 'Wallet User'}
+                  </div>
+                  <div className="text-xs text-celo-black/70 dark:text-celo-yellow/70">
+                    {user?.linkedAccounts?.length || 1} account{(user?.linkedAccounts?.length || 1) !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Wallet Info */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-celo-black dark:text-celo-yellow">
@@ -107,7 +144,7 @@ export default function PrivyLogin() {
                 <span>Wallet Conectada</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-xl bg-white/25 dark:bg-black/25 border border-white/30 dark:border-white/25 backdrop-blur-md">
-                <span className="font-mono text-sm text-celo-black dark:text-celo-yellow font-semibold">{truncate(addr)}</span>
+                <span className="font-mono text-sm text-celo-black dark:text-celo-yellow font-semibold">{truncate(wallet.address || '')}</span>
                 <button
                   onClick={copyAddress}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/30 hover:bg-white/40 border border-white/40 rounded-lg transition-all duration-200 backdrop-blur-lg text-celo-black dark:text-celo-yellow font-medium"
@@ -158,10 +195,7 @@ export default function PrivyLogin() {
 
               {/* Disconnect Button */}
               <button
-                onClick={() => {
-                  logout();
-                  setShowDropdown(false);
-                }}
+                onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/30 rounded-xl transition-all duration-200 backdrop-blur-lg group font-medium"
               >
                 <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />

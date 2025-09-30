@@ -53,14 +53,14 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Celo brand tokens - base: neutral dark (no yellow accents) */
+    /* Celo brand tokens - base: dark theme */
     --celo-bg: #0a0a0a;              /* onyx */
     --celo-fg: #ffffff;              /* white */
     --celo-muted: #9ca3af;           /* gray-400/500 */
-    --celo-yellow: #fcff52;          /* Prosperity Yellow (requested) */
+    --celo-yellow: #fcff52;          /* Prosperity Yellow */
     --celo-yellow-weak: rgba(252,255,82,0.18);
     --celo-accent: #a3f7bf;          /* optional */
-    --celo-border: var(--celo-yellow); /* dark mode: yellow borders */
+    --celo-border: rgba(252,255,82,0.3); /* subtle yellow borders */
   }
   
   .dark {
@@ -90,14 +90,14 @@
     --chart-5: 340 75% 55%;
   }
 
-  /* Yellow theme (light background, brand foreground) */
+  /* Yellow theme (light background, dark foreground) */
   .theme-yellow-dark {
-    --celo-bg: #fcff52;            /* Prosperity Yellow */
-    --celo-fg: #0a0a0a;            /* onyx text on yellow */
-    --celo-muted: #3f3f46;         /* zinc-600 for contrast */
-    --celo-border: #0a0a0a;        /* borders black on yellow */
-    --celo-yellow: #fcff52;        /* brand yellow on yellow theme where needed */
-    --celo-yellow-weak: rgba(10,10,10,0.08);
+    --celo-bg: #fcff52;            /* Prosperity Yellow background */
+    --celo-fg: #0a0a0a;            /* black text on yellow */
+    --celo-muted: #4a4a4a;         /* darker gray for better contrast */
+    --celo-border: #0a0a0a;        /* black borders on yellow */
+    --celo-yellow: #0a0a0a;        /* black accent instead of yellow on yellow */
+    --celo-yellow-weak: rgba(10,10,10,0.12);
     --celo-accent: #0a0a0a;
   }
 
@@ -132,51 +132,14 @@
   }
 }
 
-/* Celo Theme tokens - using different variable names to avoid conflicts */
-.theme-yellow {
-  --celo-bg: #F7FF58;
-  --celo-text: #0A0A0A;
-  --celo-heading: #0A0A0A;
-  --celo-card: #FFFFFF;
-  --celo-border: #ECECEC;
-}
-
-.theme-yellow.dark {
-  --celo-bg: #0A0A0A;
-  --celo-text: #FFFFFF;
-  --celo-heading: #F7FF58;
-  --celo-card: #111111;
-  --celo-border: #1E1E1E;
-}
-
 /* Celo theme utility classes */
-.celo-bg {
-  background: var(--celo-bg);
-}
-
-.celo-text {
-  color: var(--celo-text);
-}
-
-.celo-heading {
-  color: var(--celo-heading);
-}
-
-.celo-card {
-  background: var(--celo-card);
-}
-
-.celo-border {
-  border-color: var(--celo-border);
-}
-
 .hairline {
   border-width: 1px;
   border-color: var(--celo-border);
 }
 
 .surface {
-  background: var(--celo-card);
+  background: var(--celo-card, white);
 }
 
 /* focus ring */

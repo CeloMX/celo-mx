@@ -1,22 +1,107 @@
 "use client";
 
-import { useState } from "react";
-import { Heart, Share2, Check, Clock, Award, Smartphone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, Share2, Check, Clock, Award, Smartphone, Wallet, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Course } from "@/components/academy/types";
 
+interface EnrollmentState {
+  hasBadge: boolean;
+  hasClaimed: boolean;
+  isLoading: boolean;
+  isEnrolling: boolean;
+  isConfirmingEnrollment: boolean;
+  enrollmentSuccess: boolean;
+  enrollmentError: Error | null;
+  enrollmentHash?: string;
+  isWalletConnected: boolean;
+}
+
 interface EnrollPanelProps {
   course: Course;
   onEnroll: (course: Course) => void;
+  enrollmentState?: EnrollmentState;
 }
 
-export function EnrollPanel({ course, onEnroll }: EnrollPanelProps) {
+export function EnrollPanel({ course, onEnroll, enrollmentState }: EnrollPanelProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Show success message when enrollment is successful
+  useEffect(() => {
+    if (enrollmentState?.enrollmentSuccess) {
+      setShowSuccess(true);
+      const timer = setTimeout(() => setShowSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [enrollmentState?.enrollmentSuccess]);
 
   const handleEnroll = () => {
     onEnroll(course);
+  };
+
+  const getEnrollButtonContent = () => {
+    if (!enrollmentState) {
+      return course.isFree ? 'Inscribirse Gratis' : 'Inscribirse Ahora';
+    }
+
+    const { 
+      hasBadge, 
+      isLoading, 
+      isEnrolling, 
+      isConfirmingEnrollment, 
+      enrollmentSuccess,
+      isWalletConnected 
+    } = enrollmentState;
+
+    if (isLoading) {
+      return (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          Verificando...
+        </>
+      );
+    }
+
+    if (hasBadge || enrollmentSuccess) {
+      return (
+        <>
+          <Check className="w-4 h-4 mr-2" />
+          Ya Inscrito
+        </>
+      );
+    }
+
+    if (isEnrolling) {
+      return (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          Firmando Transacción...
+        </>
+      );
+    }
+
+    if (isConfirmingEnrollment) {
+      return (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          Confirmando en Blockchain...
+        </>
+      );
+    }
+
+    if (!isWalletConnected) {
+      return (
+        <>
+          <Wallet className="w-4 h-4 mr-2" />
+          Conectar Wallet
+        </>
+      );
+    }
+
+    return course.isFree ? 'Inscribirse Gratis' : 'Inscribirse Ahora';
   };
 
   const handleWishlist = () => {
@@ -62,12 +147,53 @@ export function EnrollPanel({ course, onEnroll }: EnrollPanelProps) {
         </CardHeader>
         
         <CardContent className="space-y-4">
+          {/* Success Message */}
+          {showSuccess && enrollmentState?.enrollmentHash && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 text-green-800 font-medium mb-2">
+                <Check className="w-4 h-4" />
+                ¡Inscripción Exitosa!
+              </div>
+              <p className="text-sm text-green-700 mb-2">
+                Has obtenido tu badge de inscripción en la blockchain.
+              </p>
+              <a 
+                href={`https://alfajores.celoscan.io/tx/${enrollmentState.enrollmentHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+              >
+                Ver Transacción <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {enrollmentState?.enrollmentError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-red-800 font-medium text-sm">
+                Error en la inscripción: {enrollmentState.enrollmentError.message}
+              </div>
+            </div>
+          )}
+
           <Button 
             onClick={handleEnroll}
             className="w-full text-lg py-6"
             size="lg"
+            disabled={
+              enrollmentState?.isEnrolling || 
+              enrollmentState?.isConfirmingEnrollment || 
+              enrollmentState?.hasBadge ||
+              enrollmentState?.enrollmentSuccess
+            }
+            variant={
+              enrollmentState?.hasBadge || enrollmentState?.enrollmentSuccess 
+                ? "secondary" 
+                : "default"
+            }
           >
-            {course.isFree ? 'Inscribirse Gratis' : 'Inscribirse Ahora'}
+            {getEnrollButtonContent()}
           </Button>
           
           <Button 

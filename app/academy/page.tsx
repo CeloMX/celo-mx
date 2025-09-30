@@ -16,7 +16,7 @@ export default async function AcademyIndex() {
     courses = await prisma.course.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { createdAt: 'desc' },
-      include: { level:true, category:true, instructors:{ include:{ instructor:true }}, tags:{ include:{ tag:true }} }
+      include: { Level:true, Category:true, CourseInstructor:{ include:{ Instructor:true }}, CourseTag:{ include:{ Tag:true }} }
     })
   } catch (err) {
     console.error('[academy] Database error, using static data as fallback:', err);
@@ -49,7 +49,7 @@ export default async function AcademyIndex() {
         <div className="absolute inset-0 [background-image:radial-gradient(circle,rgba(0,0,0,0.08)_1px,transparent_1px)] dark:[background-image:radial-gradient(circle,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:12px_12px] opacity-100"></div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-24">
           <div>
-            <h1 className="font-display text-4xl md:text-5xl tracking-tight">
+            <h1 className="font-display text-4xl md:text-5xl tracking-tight text-celo-fg">
               Academia <span className="brand-em">Celo</span>
             </h1>
             <p className="mt-4 text-celo-muted max-w-2xl">
@@ -82,8 +82,8 @@ export default async function AcademyIndex() {
                     id: course.id,
                     title: course.title,
                     subtitle: course.subtitle || undefined,
-                    level: course.level?.name || 'Principiante',
-                    category: course.category?.name || 'General',
+                    level: course.Level?.name || 'Principiante',
+                    category: course.Category?.name || 'General',
                     learners: course.learners || 0,
                     rating: course.rating || 4.8,
                     ratingCount: course.ratingCount || 150,

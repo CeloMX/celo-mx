@@ -6,11 +6,11 @@ dist/
 coverage/
 *.log
 
-# Env
+# Environment Files (NEVER commit secrets!)
 .env
 .env.*
-.env.local
-.env.local.backup
+.env.local*
+.env.hardhat*
 !.env.example
 
 # Prisma (si aplica)
@@ -22,9 +22,12 @@ prisma/*.db-journal
 .vscode/
 .idea/
 
+# SSL Certificates
+ssl/certificates/*.pem
+ssl/certificates/*.key
+
 # Usa SOLO npm:
 #package-lock.json
 #pnpm-lock.yaml
 #yarn.lock
 .vercel
-.env*.local

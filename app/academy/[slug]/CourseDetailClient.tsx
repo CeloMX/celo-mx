@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check, Play, Star, Users, Clock, Share2, Heart } from "lucide-react";
 import { CourseHeader } from "@/components/academy/CourseHeader";
@@ -13,6 +13,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
+import dynamic from "next/dynamic";
+
+// Dynamically import the Web3 enrollment panel to avoid SSR issues
+const Web3EnrollPanel = dynamic(
+  () => import('./Web3EnrollPanel'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="space-y-6">
+        <div className="h-48 bg-muted animate-pulse rounded-lg" />
+        <div className="h-32 bg-muted animate-pulse rounded-lg" />
+      </div>
+    )
+  }
+);
 
 interface CourseDetailClientProps {
   course: Course;
@@ -21,8 +36,14 @@ interface CourseDetailClientProps {
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const handleEnroll = (course: Course) => {
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Fallback enrollment handler for when Web3 isn't available
+  const handleFallbackEnroll = (course: Course) => {
     console.log("Enrolling in course:", course.title);
     alert("¡La función de inscripción estará disponible pronto! Se integrará con la wallet Privy y rampas de pago.");
   };
@@ -263,7 +284,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24 space-y-6">
               <CourseProgress courseSlug={course.slug} totalModules={course.modules.length} />
-              <EnrollPanel course={course} onEnroll={handleEnroll} />
+              {isMounted ? (
+                <Web3EnrollPanel course={course} />
+              ) : (
+                <EnrollPanel course={course} onEnroll={handleFallbackEnroll} />
+              )}
             </div>
           </div>
         </div>

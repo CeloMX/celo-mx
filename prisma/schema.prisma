@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin", "darwin-arm64"]
 }
 
 datasource db {
@@ -8,16 +9,190 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum PublishStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Category {
+  id        String   @id
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Course    Course[]
 }
 
-enum Visibility {
-  PUBLIC
-  LOGGED_IN
-  WALLET
+model Certificate {
+  id              String   @id
+  userId          String
+  courseId        String
+  chainId         Int
+  contractAddress String
+  tokenId         String
+  txHash          String
+  issuedAt        DateTime @default(now())
+  Course          Course   @relation(fields: [courseId], references: [id])
+  User            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, courseId])
+}
+
+model Course {
+  id               String             @id
+  slug             String             @unique
+  title            String
+  subtitle         String?
+  categoryId       String?
+  levelId          String?
+  coverUrl         String?
+  promoVideoUrl    String?
+  durationHours    Int?
+  lessonsCount     Int?
+  rating           Float?
+  ratingCount      Int?
+  learners         Int?
+  isFree           Boolean            @default(true)
+  visibility       Visibility         @default(PUBLIC)
+  status           PublishStatus      @default(PUBLISHED)
+  publishedAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  Certificate      Certificate[]
+  Category         Category?          @relation(fields: [categoryId], references: [id])
+  Level            Level?             @relation(fields: [levelId], references: [id])
+  CourseEnrollment CourseEnrollment[]
+  CourseInstructor CourseInstructor[]
+  CourseNftConfig  CourseNftConfig?
+  CourseTag        CourseTag[]
+  Module           Module[]
+}
+
+model CourseEnrollment {
+  id        String   @id
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  Course    Course   @relation(fields: [courseId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model CourseInstructor {
+  courseId     String
+  instructorId String
+  role         String?
+  Course       Course     @relation(fields: [courseId], references: [id])
+  Instructor   Instructor @relation(fields: [instructorId], references: [id])
+
+  @@id([courseId, instructorId])
+}
+
+model CourseNftConfig {
+  id                  String      @id
+  courseId            String      @unique
+  standard            NftStandard @default(ERC721)
+  chainId             Int
+  contractAddress     String
+  metadataBaseUri     String?
+  autoIssueOnComplete Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime
+  Course              Course      @relation(fields: [courseId], references: [id])
+}
+
+model CourseTag {
+  courseId String
+  tagId    String
+  Course   Course @relation(fields: [courseId], references: [id])
+  Tag      Tag    @relation(fields: [tagId], references: [id])
+
+  @@id([courseId, tagId])
+}
+
+model Instructor {
+  id               String             @id
+  name             String
+  title            String?
+  avatarUrl        String?
+  bio              String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  CourseInstructor CourseInstructor[]
+}
+
+model Lesson {
+  id                 String               @id
+  moduleId           String
+  index              Int
+  slug               String?
+  title              String
+  summary            String?
+  contentMdx         String?
+  status             PublishStatus        @default(PUBLISHED)
+  visibility         Visibility           @default(PUBLIC)
+  publishedAt        DateTime?
+  updatedAt          DateTime
+  createdAt          DateTime             @default(now())
+  Module             Module               @relation(fields: [moduleId], references: [id])
+  UserLessonProgress UserLessonProgress[]
+
+  @@unique([moduleId, index])
+}
+
+model Level {
+  id        String   @id
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Course    Course[]
+}
+
+model Module {
+  id        String   @id
+  courseId  String
+  index     Int
+  title     String
+  summary   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Lesson    Lesson[]
+  Course    Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, index])
+}
+
+model Tag {
+  id        String      @id
+  slug      String      @unique
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime
+  CourseTag CourseTag[]
+}
+
+model User {
+  id                 String               @id
+  walletAddress      String?              @unique
+  email              String?              @unique
+  displayName        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  Certificate        Certificate[]
+  CourseEnrollment   CourseEnrollment[]
+  UserLessonProgress UserLessonProgress[]
+}
+
+model UserLessonProgress {
+  id            String               @id
+  userId        String
+  lessonId      String
+  status        LessonProgressStatus @default(NOT_STARTED)
+  secondsSpent  Int                  @default(0)
+  lastVisitedAt DateTime?
+  completedAt   DateTime?
+  Lesson        Lesson               @relation(fields: [lessonId], references: [id])
+  User          User                 @relation(fields: [userId], references: [id])
+
+  @@unique([userId, lessonId])
 }
 
 enum LessonProgressStatus {
@@ -31,202 +206,14 @@ enum NftStandard {
   ERC1155
 }
 
-model Category {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  courses   Course[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
-model Tag {
-  id        String       @id @default(cuid())
-  slug      String       @unique
-  name      String
-  courses   CourseTag[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-}
-
-model Level {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  courses   Course[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Instructor {
-  id         String              @id @default(cuid())
-  name       String
-  title      String?
-  avatarUrl  String?
-  bio        String?
-  courses    CourseInstructor[]
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-}
-
-model User {
-  id           String               @id @default(cuid())
-  walletAddress String?             @unique
-  email        String?              @unique
-  displayName  String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  enrollments  CourseEnrollment[]
-  progresses   UserLessonProgress[]
-  certificates Certificate[]
-}
-
-model Course {
-  id            String             @id @default(cuid())
-  slug          String             @unique
-  title         String
-  subtitle      String?
-  categoryId    String?
-  category      Category?          @relation(fields: [categoryId], references: [id])
-  levelId       String?
-  level         Level?             @relation(fields: [levelId], references: [id])
-  instructors   CourseInstructor[]
-  tags          CourseTag[]
-  modules       Module[]
-  enrollments   CourseEnrollment[]
-  certificates  Certificate[]
-  coverUrl      String?
-  promoVideoUrl String?
-  durationHours Int?
-  lessonsCount  Int?
-  rating        Float?
-  ratingCount   Int?
-  learners      Int?
-  isFree        Boolean            @default(true)
-  visibility    Visibility         @default(PUBLIC)
-  status        PublishStatus      @default(PUBLISHED)
-  publishedAt   DateTime?
-  nftConfig     CourseNftConfig?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-}
-
-model CourseInstructor {
-  courseId    String
-  instructorId String
-  role        String?
-  course      Course     @relation(fields: [courseId], references: [id])
-  instructor  Instructor @relation(fields: [instructorId], references: [id])
-  @@id([courseId, instructorId])
-}
-
-model CourseTag {
-  courseId String
-  tagId    String
-  course   Course @relation(fields: [courseId], references: [id])
-  tag      Tag    @relation(fields: [tagId], references: [id])
-  @@id([courseId, tagId])
-}
-
-model CourseEnrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  courseId  String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  course    Course   @relation(fields: [courseId], references: [id])
-  @@unique([userId, courseId])
-}
-
-model Module {
-  id        String   @id @default(cuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
-  index     Int
-  title     String
-  summary   String?
-  lessons   Lesson[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  @@unique([courseId, index])
-}
-
-model Lesson {
-  id          String         @id @default(cuid())
-  moduleId    String
-  module      Module         @relation(fields: [moduleId], references: [id])
-  index       Int
-  slug        String?
-  title       String
-  summary     String?
-  contentMdx  String?
-  status      PublishStatus  @default(PUBLISHED)
-  visibility  Visibility     @default(PUBLIC)
-  publishedAt DateTime?
-  updatedAt   DateTime       @updatedAt
-  createdAt   DateTime       @default(now())
-  progresses  UserLessonProgress[]
-  @@unique([moduleId, index])
-}
-
-model UserLessonProgress {
-  id           String                @id @default(cuid())
-  userId       String
-  lessonId     String
-  status       LessonProgressStatus  @default(NOT_STARTED)
-  secondsSpent Int                   @default(0)
-  lastVisitedAt DateTime?
-  completedAt  DateTime?
-  user         User                  @relation(fields: [userId], references: [id])
-  lesson       Lesson                @relation(fields: [lessonId], references: [id])
-  @@unique([userId, lessonId])
-}
-
-model CourseNftConfig {
-  id                 String      @id @default(cuid())
-  courseId           String      @unique
-  course             Course      @relation(fields: [courseId], references: [id])
-  standard           NftStandard @default(ERC721)
-  chainId            Int
-  contractAddress    String
-  metadataBaseUri    String?
-  autoIssueOnComplete Boolean    @default(false)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-}
-
-model Certificate {
-  id              String   @id @default(cuid())
-  userId          String
-  courseId        String
-  chainId         Int
-  contractAddress String
-  tokenId         String
-  txHash          String
-  issuedAt        DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id])
-  course          Course   @relation(fields: [courseId], references: [id])
-  @@index([userId, courseId])
-}
-
-// Legacy tables (keep existing data)
-model ContactMessage {
-  id        String   @id
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
-}
-
-model EmailSubscriber {
-  id        String   @id
-  email     String   @unique
-  createdAt DateTime @default(now())
-}
-
-model FormSubmission {
-  id        String   @id
-  formKey   String
-  json      String
-  createdAt DateTime @default(now())
+enum Visibility {
+  PUBLIC
+  LOGGED_IN
+  WALLET
 }

@@ -92,7 +92,14 @@ export function useClaimBadge() {
         // Invalidate enrollment cache immediately after transaction is sent
         setTimeout(() => {
           queryClient.invalidateQueries({ 
-            queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+            queryKey: ['readContract'], 
+            predicate: (query: any) => {
+              const queryKey = query.queryKey;
+              return queryKey && 
+                     queryKey[0] === 'readContract' && 
+                     queryKey[1]?.address === CONTRACT_ADDRESS && 
+                     queryKey[1]?.functionName === 'isEnrolled';
+            }
           });
         }, 1000);
         
@@ -131,7 +138,14 @@ export function useClaimBadge() {
       // Invalidate enrollment cache immediately after transaction is sent
       setTimeout(() => {
         queryClient.invalidateQueries({ 
-          queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+          queryKey: ['readContract'], 
+          predicate: (query: any) => {
+            const queryKey = query.queryKey;
+            return queryKey && 
+                   queryKey[0] === 'readContract' && 
+                   queryKey[1]?.address === CONTRACT_ADDRESS && 
+                   queryKey[1]?.functionName === 'isEnrolled';
+          }
         });
       }, 1000);
       

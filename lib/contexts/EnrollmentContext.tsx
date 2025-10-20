@@ -76,25 +76,47 @@ export function EnrollmentProvider({
 
   // Use enrollment service (follows Motus pattern with direct kernelClient usage)
   const enrollInCourse = async () => {
-    console.log('[ENROLLMENT CONTEXT] Using enrollment service:', {
+    console.log('[ENROLLMENT CONTEXT] 🚀 Starting enrollment process for:', {
+      courseSlug,
+      courseId,
       privyAuthenticated,
       serviceReady: enrollmentService.isServiceReady,
       hasSmartAccount: enrollmentService.hasSmartAccount,
       canSponsorTransaction: enrollmentService.canSponsorTransaction,
+      userAddress,
+      isWalletConnected,
     });
     
     if (!enrollmentService.isServiceReady) {
+      console.error('[ENROLLMENT CONTEXT] ❌ Service not ready');
       throw new Error('Enrollment service not ready. Please wait for smart account initialization.');
     }
     
-    // CRITICAL: Use enrollment service with direct kernelClient.sendTransaction
-    const result = await enrollmentService.enrollInCourse(courseSlug, courseId);
+    console.log('[ENROLLMENT CONTEXT] 🔄 Calling enrollment service...');
     
-    if (!result.success) {
-      throw new Error(result.error || 'Enrollment failed');
+    try {
+      // CRITICAL: Use enrollment service with direct kernelClient.sendTransaction
+      const result = await enrollmentService.enrollInCourse(courseSlug, courseId);
+      
+      console.log('[ENROLLMENT CONTEXT] 📨 Enrollment service response:', result);
+      
+      if (!result.success) {
+        console.error('[ENROLLMENT CONTEXT] ❌ Enrollment failed:', result.error);
+        throw new Error(result.error || 'Enrollment failed');
+      }
+      
+      console.log('[ENROLLMENT CONTEXT] ✅ Enrollment completed:', result.transactionHash);
+      
+      // Force immediate cache refresh
+      setTimeout(() => {
+        console.log('[ENROLLMENT CONTEXT] 🔄 Triggering cache refresh...');
+        queryClient.invalidateQueries();
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('[ENROLLMENT CONTEXT] 💥 Enrollment error:', error);
+      throw error;
     }
-    
-    console.log('[ENROLLMENT CONTEXT] ✅ Enrollment completed:', result.transactionHash);
   };
 
   const enrollmentState: EnrollmentState = {

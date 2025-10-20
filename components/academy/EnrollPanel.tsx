@@ -41,11 +41,26 @@ export function EnrollPanel({ course, onEnroll, enrollmentState }: EnrollPanelPr
   }, [enrollmentState?.enrollmentSuccess]);
 
   const handleEnroll = () => {
+    console.log('[ENROLL PANEL] 👆 Button clicked! Enrollment state:', {
+      hasEnrollmentState: !!enrollmentState,
+      isWalletConnected: enrollmentState?.isWalletConnected,
+      hasBadge: enrollmentState?.hasBadge,
+      isEnrolling: enrollmentState?.isEnrolling,
+      course: {
+        title: course.title,
+        slug: course.slug,
+        id: course.id,
+      }
+    });
+    
     // If wallet is not connected, trigger login instead
     if (enrollmentState && !enrollmentState.isWalletConnected) {
+      console.log('[ENROLL PANEL] 🔑 Wallet not connected, triggering login...');
       login();
       return;
     }
+    
+    console.log('[ENROLL PANEL] ➡️ Calling onEnroll with course...');
     onEnroll(course);
   };
 

@@ -78,13 +78,18 @@ export function useEnrollmentService() {
       const result = await enrollmentService.enrollInCourse(courseSlug, courseId);
       
       if (result.success) {
-        // Invalidate cache after successful enrollment (like our previous implementation)
+        // Invalidate cache after successful enrollment using correct contract address
         setTimeout(() => {
+          // Invalidate all isEnrolled queries for the optimized contract
           queryClient.invalidateQueries({ 
-            queryKey: ['readContract', { 
-              address: enrollmentService.getSmartAccountAddress, 
-              functionName: 'isEnrolled' 
-            }] 
+            queryKey: ['readContract'], 
+            predicate: (query: any) => {
+              const queryKey = query.queryKey;
+              return queryKey && 
+                     queryKey[0] === 'readContract' && 
+                     queryKey[1]?.address === '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29' && 
+                     queryKey[1]?.functionName === 'isEnrolled';
+            }
           });
           console.log('🔄 Cache invalidated after successful enrollment');
         }, 1000);

@@ -127,7 +127,13 @@ export class EnrollmentService {
     const contractAddress = OPTIMIZED_CONTRACT_CONFIG.address;
     const tokenId = getCourseTokenId(courseSlug, courseId);
     
-    console.log('🚀 Enrolling with ZeroDev Kernel client:', this.smartAccountSigner.account.address);
+    console.log('🚀 [ENROLLMENT SERVICE] Starting enrollWithKernel...');
+    console.log('📝 Smart account details:', {
+      hasSmartAccountSigner: !!this.smartAccountSigner,
+      signerAddress: this.smartAccountSigner?.account?.address,
+      signerType: this.smartAccountSigner?.constructor?.name,
+      hasSendTransaction: typeof this.smartAccountSigner?.sendTransaction === 'function',
+    });
     console.log('📋 Enrollment params:', {
       courseSlug,
       courseId,
@@ -136,44 +142,66 @@ export class EnrollmentService {
     });
     
     try {
+      // Validate smart account signer
+      if (!this.smartAccountSigner) {
+        throw new Error('Smart account signer not available');
+      }
+      
+      if (!this.smartAccountSigner.account) {
+        throw new Error('Smart account not found in signer');
+      }
+      
+      if (typeof this.smartAccountSigner.sendTransaction !== 'function') {
+        throw new Error('sendTransaction method not available on smart account signer');
+      }
+      
       // Validate contract address
       if (!contractAddress || contractAddress.trim() === '') {
         throw new Error(`Contract address not found: ${contractAddress}`);
       }
       
-      console.log('📍 Contract address (Optimized):', contractAddress);
+      console.log('📍 [ENROLLMENT SERVICE] Contract address (Optimized):', contractAddress);
       
       // Generate encoded data for enroll function - SAME AS MOTUS PATTERN
       const encodedData = this.encodeEnrollData(tokenId);
-      console.log('🔒 Encoded enroll data:', encodedData);
-      console.log('📏 Encoded data length:', encodedData.length);
+      console.log('🔒 [ENROLLMENT SERVICE] Encoded enroll data:', encodedData);
+      console.log('📏 [ENROLLMENT SERVICE] Encoded data length:', encodedData.length);
+      
+      console.log('💸 [ENROLLMENT SERVICE] About to call sendTransaction with params:', {
+        to: contractAddress,
+        data: encodedData,
+        value: '0'
+      });
       
       // CRITICAL: Direct kernelClient.sendTransaction call like Motus
       // The kernel client is a drop-in replacement for viem's wallet client
       // Use sendTransaction directly - ZeroDev will handle the user operation creation
+      console.log('🔄 [ENROLLMENT SERVICE] Calling smartAccountSigner.sendTransaction...');
+      
       const hash = await this.smartAccountSigner.sendTransaction({
         to: contractAddress as `0x${string}`,
         data: encodedData,
         value: BigInt(0)
       });
       
-      console.log('✅ ZeroDev enrollment transaction sent:', hash);
+      console.log('✅ [ENROLLMENT SERVICE] ZeroDev enrollment transaction sent:', hash);
       
       return {
         success: true,
         transactionHash: hash,
       };
     } catch (error: any) {
-      console.error('❌ ZeroDev enrollment failed:', {
+      console.error('❌ [ENROLLMENT SERVICE] ZeroDev enrollment failed:', {
         error: error.message,
         code: error.code,
         details: error.details,
-        data: error.data
+        data: error.data,
+        stack: error.stack
       });
       
       // Handle "Already enrolled" case
       if (error.message?.includes('Already enrolled') || error.message?.includes('416c726561647920656e726f6c6c6564')) {
-        console.log('✅ User already enrolled - treating as success');
+        console.log('✅ [ENROLLMENT SERVICE] User already enrolled - treating as success');
         return {
           success: true,
           transactionHash: 'already-enrolled',

@@ -19,17 +19,27 @@ export default function Web3EnrollPanel({ course }: Web3EnrollPanelProps) {
   });
 
   const handleEnroll = async (course: Course) => {
+    console.log('[WEB3 ENROLL PANEL] 🏃 handleEnroll called with:', {
+      courseTitle: course.title,
+      courseSlug: course.slug,
+      courseId: course.id,
+      isWalletConnected: enrollment.isWalletConnected,
+      hasBadge: enrollment.hasBadge,
+      isEnrolling: enrollment.isEnrolling
+    });
+    
     if (!enrollment.isWalletConnected) {
+      console.log('[WEB3 ENROLL PANEL] ❌ Wallet not connected');
       alert("Por favor conecta tu wallet para inscribirte en el curso.");
       return;
     }
     
     try {
-      console.log('[WEB3 ENROLL PANEL] Enrolling in course:', course.title);
+      console.log('[WEB3 ENROLL PANEL] 🏁 Starting enrollment process...');
       await enrollment.enrollInCourse();
-      console.log('[WEB3 ENROLL PANEL] Enrollment initiated');
+      console.log('[WEB3 ENROLL PANEL] ✅ Enrollment process completed');
     } catch (error) {
-      console.error('[WEB3 ENROLL PANEL] Enrollment error:', error);
+      console.error('[WEB3 ENROLL PANEL] 🚨 Enrollment error:', error);
       alert(`Error al inscribirse: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };

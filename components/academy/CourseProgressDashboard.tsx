@@ -45,25 +45,36 @@ export function CourseProgressDashboard({
   const contractAddress = getOptimizedContractAddress(42220);
   const networkConfig = getNetworkConfig(42220);
   
-  // SIMPLE FIX - Use enrollment context that already has the user address
+  // Check BOTH wallet and smart account addresses
   const enrollmentUserAddress = enrollment.userAddress;
+  const { smartAccountAddress } = useSmartAccount();
   const tokenId = getCourseTokenId(courseSlug, courseId);
   
-  // Get module completion data using the working address from enrollment
-  const module0Completed = useHasCompletedModule(enrollmentUserAddress, tokenId, 0);
-  const module1Completed = useHasCompletedModule(enrollmentUserAddress, tokenId, 1);
-  const module2Completed = useHasCompletedModule(enrollmentUserAddress, tokenId, 2);
+  // Get module completion data for wallet address
+  const wallet_module0 = useHasCompletedModule(enrollmentUserAddress, tokenId, 0);
+  const wallet_module1 = useHasCompletedModule(enrollmentUserAddress, tokenId, 1);
+  const wallet_module2 = useHasCompletedModule(enrollmentUserAddress, tokenId, 2);
+  const wallet_module3 = useHasCompletedModule(enrollmentUserAddress, tokenId, 3);
   
+  // Get module completion data for smart account address
+  const smart_module0 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 0);
+  const smart_module1 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 1);
+  const smart_module2 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 2);
+  const smart_module3 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 3);
+  
+  // Module is completed if EITHER wallet OR smart account has completed it
   const moduleCompletionStatus = [
-    module0Completed.data || false,
-    module1Completed.data || false,
-    module2Completed.data || false,
+    wallet_module0.data || smart_module0.data || false,
+    wallet_module1.data || smart_module1.data || false,
+    wallet_module2.data || smart_module2.data || false,
+    wallet_module3.data || smart_module3.data || false,
   ].slice(0, modules.length);
   
   const completedModules = moduleCompletionStatus.filter(Boolean).length;
   const progressPercentage = modules.length > 0 ? Math.round((completedModules / modules.length) * 100) : 0;
   const isComplete = progressPercentage === 100;
-  const progressLoading = module0Completed.isLoading || module1Completed.isLoading || module2Completed.isLoading;
+  const progressLoading = wallet_module0.isLoading || wallet_module1.isLoading || wallet_module2.isLoading || wallet_module3.isLoading ||
+                         smart_module0.isLoading || smart_module1.isLoading || smart_module2.isLoading || smart_module3.isLoading;
 
   useEffect(() => {
     setMounted(true);
@@ -74,7 +85,8 @@ export function CourseProgressDashboard({
   console.log('[COURSE PROGRESS DASHBOARD] Using direct module hooks:', {
     courseSlug,
     isEnrolled,
-    address: enrollmentUserAddress || 'none',
+    walletAddress: enrollmentUserAddress || 'none',
+    smartAccountAddress: smartAccountAddress || 'none',
     completedModules,
     totalModules: modules.length,
     progressPercentage,
@@ -205,6 +217,7 @@ export function CourseProgressDashboard({
           publishedAt: new Date(),
           createdAt: new Date(),
           updatedAt: new Date(),
+          tokenId: null,
         }}
         completedModules={completedModules}
         totalModules={modules.length}

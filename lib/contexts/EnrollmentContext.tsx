@@ -26,6 +26,7 @@ interface EnrollmentState {
   serverHasAccess: boolean;
   isWalletConnected: boolean;
   userAddress?: Address;
+  enrollmentCount?: number;
 }
 
 const EnrollmentContext = createContext<EnrollmentState | null>(null);
@@ -76,6 +77,8 @@ export function EnrollmentProvider({
   const [isConfirmingEnrollment, setIsConfirmingEnrollment] = useState(false);
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [enrollmentError, setEnrollmentError] = useState<Error | null>(null);
+  const [enrollmentCount, setEnrollmentCount] = useState<number | undefined>(undefined);
+  const [didSync, setDidSync] = useState(false);
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state (DIRECT MAINNET):', {
     directMainnetEnrolled: directMainnetCheck.isEnrolled,
@@ -88,6 +91,92 @@ export function EnrollmentProvider({
     smartAccountReady: smartAccount.isSmartAccountReady,
     serverHasAccess,
   });
+
+  // Fetch enrollment count
+  useEffect(() => {
+    let aborted = false;
+    async function fetchCount() {
+      try {
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setEnrollmentCount(data.count);
+      } catch {}
+    }
+    fetchCount();
+    return () => { aborted = true };
+  }, [courseSlug]);
+
+  // Reconcile DB if on-chain enrolled but DB likely missing
+  useEffect(() => {
+    async function syncIfNeeded() {
+      if (!isWalletConnected || !addressForEnrollmentCheck) return;
+      const isOnChain = !!directMainnetCheck.isEnrolled;
+      if (isOnChain && !didSync) {
+        try {
+          const res = await fetch(`/api/courses/${courseSlug}/sync-enrollment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address: addressForEnrollmentCheck }),
+          });
+          setDidSync(true);
+          // refresh count regardless of serverHasAccess
+          try {
+            const r = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+            const d = await r.json();
+            if (typeof d.count === 'number') setEnrollmentCount(d.count);
+          } catch {}
+        } catch (e) {
+          console.warn('[ENROLLMENT CONTEXT] Sync enrollment failed:', e);
+        }
+      }
+    }
+    syncIfNeeded();
+  }, [directMainnetCheck.isEnrolled, isWalletConnected, addressForEnrollmentCheck, courseSlug, didSync]);
+
+  // Also refetch count after a successful enroll
+  useEffect(() => {
+    async function refetch() {
+      try {
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        const data = await res.json();
+        if (typeof data.count === 'number') setEnrollmentCount(data.count);
+      } catch {}
+    }
+    if (hash && !isConfirmingEnrollment) {
+      refetch();
+    }
+  }, [hash, isConfirmingEnrollment, courseSlug]);
+
+  // Retry listener: if on-chain says enrolled but DB count not updated yet, keep syncing a few times
+  useEffect(() => {
+    if (!isWalletConnected || !addressForEnrollmentCheck || !directMainnetCheck.isEnrolled) return;
+    let cancelled = false;
+    let attempts = 0;
+    const delays = [500, 1000, 2000, 3000, 5000];
+
+    async function attemptSync() {
+      if (cancelled || attempts >= delays.length) return;
+      attempts++;
+      try {
+        await fetch(`/api/courses/${courseSlug}/sync-enrollment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addressForEnrollmentCheck }),
+        });
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        const data = await res.json();
+        if (typeof data.count === 'number') {
+          setEnrollmentCount(data.count);
+          if (data.count > 0) return; // success
+        }
+      } catch {}
+      setTimeout(() => { if (!cancelled) attemptSync(); }, delays[Math.min(attempts, delays.length - 1)]);
+    }
+
+    if (!enrollmentCount || enrollmentCount === 0) attemptSync();
+    return () => { cancelled = true };
+  }, [isWalletConnected, addressForEnrollmentCheck, directMainnetCheck.isEnrolled, courseSlug, enrollmentCount]);
 
   // FORCED SPONSORED ENROLLMENT - ZeroDev smart account with paymaster (MAINNET ONLY)
   const enrollInCourse = async () => {
@@ -114,13 +203,7 @@ export function EnrollmentProvider({
         args: [tokenId],
       });
       
-      console.log('[ENROLLMENT] ✅ EXECUTING FORCED MAINNET TRANSACTION:', {
-        to: contractConfig.address,
-        chainId: 42220, // Celo Mainnet
-        rpc: 'https://forno.celo.org',
-        data: encodedData,
-        tokenId: tokenId.toString(),
-      });
+ 
       
       // Use ZeroDev sponsored transaction - THIS ALWAYS GOES TO MAINNET
       const txHash = await smartAccount.executeTransaction({
@@ -153,6 +236,24 @@ export function EnrollmentProvider({
         } finally {
           setIsConfirmingEnrollment(false);
         }
+
+        // Immediately sync enrollment to DB and refresh count
+        try {
+          const addr = addressForEnrollmentCheck || userAddress;
+          if (addr) {
+            await fetch(`/api/courses/${courseSlug}/sync-enrollment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ address: addr }),
+            });
+            const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+            const data = await res.json();
+            if (typeof data.count === 'number') setEnrollmentCount(data.count);
+            setDidSync(true);
+          }
+        } catch (e) {
+          console.warn('[ENROLLMENT] DB sync/count refresh failed:', e);
+        }
       }
     } catch (error: any) {
       console.error('[ENROLLMENT] ❌ Sponsored transaction failed:', error);
@@ -177,6 +278,7 @@ export function EnrollmentProvider({
     serverHasAccess,
     isWalletConnected,
     userAddress,
+    enrollmentCount,
   };
 
   return (

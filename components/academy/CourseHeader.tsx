@@ -5,12 +5,15 @@ import { Star, Users, Clock, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/components/academy/types";
+import { useEnrollment } from '@/lib/contexts/EnrollmentContext';
 
 interface CourseHeaderProps {
   course: Course;
 }
 
 export function CourseHeader({ course }: CourseHeaderProps) {
+  const enrollment = useEnrollment();
+  const liveCount = typeof enrollment?.enrollmentCount === 'number' ? enrollment.enrollmentCount : course.learners;
   const formatLearners = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -103,7 +106,7 @@ export function CourseHeader({ course }: CourseHeaderProps) {
 
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-muted-foreground" />
-            <span>{formatLearners(course.learners)} estudiantes</span>
+            <span>{formatLearners(liveCount)} estudiantes</span>
           </div>
 
           <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,6 +29,25 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, href }: CourseCardProps) {
+  const [count, setCount] = useState<number | null>(null as any);
+  useEffect(() => {
+    let aborted = false;
+    // try to derive slug from href like /academy/[slug]
+    const m = href.match(/\/academy\/(.+)$/);
+    const slug = m?.[1];
+    async function load() {
+      try {
+        if (!slug) return;
+        const res = await fetch(`/api/courses/${slug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setCount(data.count);
+      } catch {}
+    }
+    load();
+    return () => { aborted = true };
+  }, [href]);
+
   const formatDuration = (hours: number) => {
     if (hours < 1) return `${Math.round(hours * 60)}m`;
     if (hours < 24) return `${hours}h`;
@@ -123,7 +143,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{formatLearners(course.learners)} alumnos</span>
+                <span>{formatLearners((count ?? course.learners))} alumnos</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -147,7 +167,8 @@ export function CourseCard({ course, href }: CourseCardProps) {
 
             {/* CTA Button */}
             <Button 
-              className="w-full bg-celo-yellow text-black font-medium py-2.5 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-celo-yellow/70 focus:ring-offset-2 focus:ring-offset-white relative overflow-hidden before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,rgba(245,240,230,0.9),rgba(245,240,230,0)_60%)] before:opacity-0 before:scale-0 before:transition-transform before:duration-500 before:ease-out hover:before:opacity-100 hover:before:scale-125 before:-z-10"
+              variant="outline"
+              className="w-full bg-transparent text-celoLegacy-yellow border border-celoLegacy-yellow font-medium py-2.5 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-celoLegacy-yellow/70 hover:bg-celoLegacy-yellow/10"
             >
               Ver curso
               <ArrowRight className="w-4 h-4" />

@@ -28,6 +28,7 @@ export default function Web3EnrollPanel({ course }: Web3EnrollPanelProps) {
       console.log('[WEB3 ENROLL PANEL] Enrolling in course:', course.title);
       await enrollment.enrollInCourse();
       console.log('[WEB3 ENROLL PANEL] Enrollment initiated');
+
     } catch (error) {
       console.error('[WEB3 ENROLL PANEL] Enrollment error:', error);
       alert(`Error al inscribirse: ${error instanceof Error ? error.message : 'Error desconocido'}`);

@@ -35,7 +35,7 @@ export default function ModuleProgress({
     completionHash,
     completionError,
     completionSuccess,
-    completeWithWallet,
+    completeWithSponsorship,
   } = useUnifiedModuleCompletion();
   
   console.log(`[MODULE PROGRESS ${moduleIndex}] Dual check:`, {
@@ -66,7 +66,7 @@ export default function ModuleProgress({
       return;
     }
     
-    await completeWithWallet();
+    await completeWithSponsorship();
   };
 
   // Show loading state while checking enrollment/blockchain
@@ -169,8 +169,8 @@ export default function ModuleProgress({
 
   // Ready to complete
   return (
-    <Button onClick={handleComplete} className="w-full md:w-auto">
-      Completar Módulo
+    <Button onClick={handleComplete} className="w-full md:w-auto bg-black text-celo-yellow hover:bg-black/90">
+      Completar Módulo (Sin Gas)
     </Button>
   );
 }

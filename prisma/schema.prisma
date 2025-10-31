@@ -54,12 +54,14 @@ model Course {
   publishedAt      DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime
+  tokenId          BigInt?
   Certificate      Certificate[]
   Category         Category?          @relation(fields: [categoryId], references: [id])
   Level            Level?             @relation(fields: [levelId], references: [id])
   CourseEnrollment CourseEnrollment[]
   CourseInstructor CourseInstructor[]
   CourseNftConfig  CourseNftConfig?
+  CourseReview     CourseReview[]
   CourseTag        CourseTag[]
   Module           Module[]
 }
@@ -73,6 +75,20 @@ model CourseEnrollment {
   User      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, courseId])
+}
+
+model CourseReview {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userid    String
+  courseid  String
+  rating    Int
+  comment   String?
+  createdat DateTime @default(now()) @db.Timestamptz(6)
+  updatedat DateTime @default(now()) @db.Timestamptz(6)
+  Course    Course   @relation(fields: [courseid], references: [id], map: "coursereview_course_fkey")
+  User      User     @relation(fields: [userid], references: [id], map: "coursereview_user_fkey")
+
+  @@unique([userid, courseid], map: "coursereview_userid_courseid_key")
 }
 
 model CourseInstructor {
@@ -178,6 +194,7 @@ model User {
   updatedAt          DateTime
   Certificate        Certificate[]
   CourseEnrollment   CourseEnrollment[]
+  CourseReview       CourseReview[]
   UserLessonProgress UserLessonProgress[]
 }
 

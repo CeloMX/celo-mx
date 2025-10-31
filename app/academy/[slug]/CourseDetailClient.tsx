@@ -18,6 +18,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { EnrollmentProvider, useEnrollment } from '@/lib/contexts/EnrollmentContext';
 import { CourseProgressDashboard } from '@/components/academy/CourseProgressDashboard';
 import { CourseProgressProvider } from '@/lib/contexts/CourseProgressProvider';
+import { CourseReviews } from '@/components/academy/CourseReviews';
+import { useHasCompletedModule } from '@/lib/hooks/useModuleCompletion';
+import { getCourseTokenId } from '@/lib/courseToken';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 
 // Dynamically import the Web3 enrollment panel to avoid SSR issues
 const Web3EnrollPanel = dynamic(
@@ -42,14 +46,111 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [learnersCount, setLearnersCount] = useState<number | null>(null);
+  const [reviewStats, setReviewStats] = useState<{ average: number | null; count: number }>({ average: null, count: 0 });
+  const enrollment = useEnrollment();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Get enrollment status from context
-  const enrollment = useEnrollment();
+  // Fetch live enrollment count
+  useEffect(() => {
+    let aborted = false;
+    async function loadCount() {
+      try {
+        const res = await fetch(`/api/courses/${course.slug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setLearnersCount(data.count);
+      } catch {}
+    }
+    loadCount();
+    return () => { aborted = true };
+
+  }, [course.slug, enrollment.enrollmentSuccess]);
+  
+  // Fetch review stats
+  useEffect(() => {
+    let aborted = false;
+    async function loadReviews() {
+      try {
+        const res = await fetch(`/api/courses/${course.slug}/reviews`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted) {
+          setReviewStats({ average: data.average, count: data.count });
+        }
+      } catch {}
+    }
+    loadReviews();
+    return () => { aborted = true };
+  }, [course.slug]);
+  
   const isEnrolled = enrollment.hasBadge || enrollment.hasClaimed || enrollment.enrollmentSuccess || enrollment.serverHasAccess;
+  const courseWithCount: Course = { 
+    ...course, 
+    learners: learnersCount ?? course.learners,
+    rating: reviewStats.average ?? course.rating,
+    ratingCount: reviewStats.count ?? course.ratingCount,
+  };
+  
+  // Check on-chain completion for all modules - check BOTH wallet and smart account
+  const tokenId = getCourseTokenId(course.slug, course.id);
+  const enrollmentUserAddress = enrollment.userAddress;
+  const { smartAccountAddress } = useSmartAccount();
+  
+  // Check wallet address
+  const wallet_module0 = useHasCompletedModule(enrollmentUserAddress, tokenId, 0);
+  const wallet_module1 = useHasCompletedModule(enrollmentUserAddress, tokenId, 1);
+  const wallet_module2 = useHasCompletedModule(enrollmentUserAddress, tokenId, 2);
+  const wallet_module3 = useHasCompletedModule(enrollmentUserAddress, tokenId, 3);
+  
+  // Check smart account address
+  const smart_module0 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 0);
+  const smart_module1 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 1);
+  const smart_module2 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 2);
+  const smart_module3 = useHasCompletedModule(smartAccountAddress || undefined, tokenId, 3);
+  
+  const isLoadingCompletion = wallet_module0.isLoading || wallet_module1.isLoading || wallet_module2.isLoading || wallet_module3.isLoading ||
+                               smart_module0.isLoading || smart_module1.isLoading || smart_module2.isLoading || smart_module3.isLoading;
+  
+  // Module is completed if EITHER wallet OR smart account has completed it
+  const moduleCompletionStatus = [
+    wallet_module0.data || smart_module0.data || false,
+    wallet_module1.data || smart_module1.data || false,
+    wallet_module2.data || smart_module2.data || false,
+    wallet_module3.data || smart_module3.data || false,
+  ].slice(0, course.modules.length);
+  
+  const completedModules = moduleCompletionStatus.filter(Boolean).length;
+  const onChainCompletion = course.modules.length > 0 ? Math.round((completedModules / course.modules.length) * 100) : 0;
+  const hasCompletedOnChain = onChainCompletion === 100;
+  
+  console.log('[ON-CHAIN COMPLETION CHECK]', {
+    enrollmentUserAddress,
+    smartAccountAddress,
+    tokenId: tokenId.toString(),
+    isLoadingCompletion,
+    wallet_modules: [
+      wallet_module0.data,
+      wallet_module1.data,
+      wallet_module2.data,
+      wallet_module3.data,
+    ],
+    smart_modules: [
+      smart_module0.data,
+      smart_module1.data,
+      smart_module2.data,
+      smart_module3.data,
+    ],
+    completedModules,
+    totalModules: course.modules.length,
+    onChainCompletion,
+    hasCompletedOnChain,
+    moduleCompletionStatus,
+  });
   
   console.log('[COURSE DETAIL] Enrollment status:', {
     hasBadge: enrollment.hasBadge,
@@ -57,6 +158,8 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
     enrollmentSuccess: enrollment.enrollmentSuccess,
     serverHasAccess: enrollment.serverHasAccess,
     isEnrolled,
+    hasCompletedOnChain,
+    user: user ? 'authenticated' : 'not authenticated',
   });
 
   // Fallback enrollment handler for when Web3 isn't available
@@ -86,7 +189,7 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
       {/* Hero Section */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
-          <CourseHeader course={course} />
+          <CourseHeader course={courseWithCount} />
         </div>
       </div>
 
@@ -224,18 +327,12 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
                 </Card>
               </div>
 
-              {/* Reviews Placeholder */}
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Reseñas</h2>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center py-8">
-                      <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">¡Las reseñas y calificaciones estarán disponibles pronto!</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              {/* Reviews */}
+              <CourseReviews
+                courseSlug={course.slug}
+                isEnrolled={isEnrolled}
+                hasCompleted={hasCompletedOnChain}
+              />
             </div>
 
             {/* Mobile: Tabs */}
@@ -304,14 +401,11 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
                 </TabsContent>
 
                 <TabsContent value="reviews" className="mt-6">
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="text-center py-8">
-                        <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">Reviews and ratings will be available soon!</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <CourseReviews
+                    courseSlug={course.slug}
+                    isEnrolled={isEnrolled}
+                    hasCompleted={hasCompletedOnChain}
+                  />
                 </TabsContent>
               </Tabs>
             </div>
@@ -327,9 +421,9 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
                 modules={course.modules}
               />
               {isMounted ? (
-                <Web3EnrollPanel course={course} />
+                <Web3EnrollPanel course={courseWithCount} />
               ) : (
-                <EnrollPanel course={course} onEnroll={handleFallbackEnroll} />
+                <EnrollPanel course={courseWithCount} onEnroll={handleFallbackEnroll} />
               )}
             </div>
           </div>

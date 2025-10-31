@@ -85,6 +85,10 @@ export default function HeroStrip() {
               <span className="relative z-10 dark:group-hover:text-black">Construye con Celo</span>
               <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
             </Link>
+
+<a href="https://app.deform.cc/form/7d776831-8f8a-4fd6-81f7-b60227023c8c/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full px-8 py-4 text-base sm:text-lg font-bold bg-celoLegacy-yellow text-black hover:bg-celoLegacy-yellow/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-celoLegacy-yellow">
+aplica al buildathon
+            </a>
             
             <button className="group flex items-center gap-2 celo-text font-medium text-sm sm:text-base hover:opacity-80 transition-all duration-200">
               <span>Únete a la comunidad</span>

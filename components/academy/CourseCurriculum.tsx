@@ -144,7 +144,7 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
     <div className="space-y-6">
       {/* Header with stats */}
       <div>
-        <h2 className="text-2xl font-bold mb-2">Temario del Curso</h2>
+        <h2 className="text-2xl font-bold mb-2 text-celo-yellow">Temario del Curso</h2>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span>{course.modules.length} módulos</span>
           <span>•</span>
@@ -178,12 +178,12 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
         {course.modules.map((module: Module) => (
           <AccordionItem key={module.index} value={`module-${module.index}`} className="border rounded-lg px-4">
             <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center gap-3 text-left">
-                <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full text-sm font-semibold">
+                <div className="flex items-center gap-3 text-left">
+                <div className="flex items-center justify-center w-8 h-8 bg-black text-celo-yellow rounded-full text-sm font-semibold">
                   {module.index}
                 </div>
                 <div>
-                  <div className="font-semibold">Módulo {module.index}: {module.title}</div>
+                  <div className="font-semibold text-celo-yellow">Módulo {module.index}: {module.title}</div>
                   {module.summary && (
                     <div className="text-sm text-muted-foreground font-normal">
                       {module.summary}
@@ -208,11 +208,11 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                   <AccordionItem key={submodule.index} value={`submodule-${module.index}-${submodule.index}`} className="border rounded-lg px-3">
                     <AccordionTrigger className="hover:no-underline py-3">
                       <div className="flex items-center gap-3 text-left">
-                        <div className="flex items-center justify-center w-6 h-6 bg-muted text-muted-foreground rounded-full text-xs font-semibold">
+                        <div className="flex items-center justify-center w-6 h-6 bg-black text-celo-yellow rounded-full text-xs font-semibold">
                           {submodule.index}
                         </div>
                         <div>
-                          <div className="font-medium text-sm">{submodule.title}</div>
+                          <div className="font-medium text-sm text-celo-yellow">{submodule.title}</div>
                           {submodule.summary && (
                             <div className="text-xs text-muted-foreground font-normal">
                               {submodule.summary}
@@ -346,7 +346,7 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                           return (
                             <div key={itemIndex} className="space-y-2">
                               <div
-                                className={`flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${item.content ? 'cursor-pointer' : ''}`}
+                                className={`flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 hover:text-black transition-colors ${item.content ? 'cursor-pointer' : ''}`}
                                 onClick={item.content ? () => setExpandedContent(isExpanded ? null : itemId) : undefined}
                               >
                                 {/* Video thumbnail or icon */}

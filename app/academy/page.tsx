@@ -16,7 +16,7 @@ export default async function AcademyIndex() {
     courses = await prisma.course.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { createdAt: 'desc' },
-      include: { Level:true, Category:true, CourseInstructor:{ include:{ Instructor:true }}, CourseTag:{ include:{ Tag:true }} }
+      include: { Level:true, Category:true, CourseInstructor:{ include:{ Instructor:true }}, CourseTag:{ include:{ Tag:true }}, _count:{ select:{ CourseEnrollment:true }}}
     })
   } catch (err) {
     console.error('[academy] Database error, using static data as fallback:', err);
@@ -84,7 +84,7 @@ export default async function AcademyIndex() {
                     subtitle: course.subtitle || undefined,
                     level: course.Level?.name || 'Principiante',
                     category: course.Category?.name || 'General',
-                    learners: course.learners || 0,
+                    learners: (course._count?.CourseEnrollment ?? course.learners) || 0,
                     rating: course.rating || 4.8,
                     ratingCount: course.ratingCount || 150,
                     durationHours: course.durationHours || 8,

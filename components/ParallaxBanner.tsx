@@ -90,23 +90,33 @@ export default function ParallaxBanner({
       aria-label="Buildathon banner"
       className={`relative w-full ${heightClass} overflow-hidden`}
     >
-      <div
-        ref={containerRef}
-        className="absolute inset-0"
-      >
+      {/* Background layer: desktop uses background-attachment: fixed directly on container; mobile uses inner layer with translateY */}
+      {mobileParallax ? (
+        <div ref={containerRef} className="absolute inset-0">
+          <div
+            ref={bgRef}
+            className="absolute inset-0 will-change-transform"
+            style={{
+              backgroundImage: `url(${imageUrl})`,
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center center',
+            }}
+          />
+        </div>
+      ) : (
         <div
-          ref={bgRef}
-          className="absolute inset-0 will-change-transform"
+          ref={containerRef}
+          className="absolute inset-0"
           style={{
             backgroundImage: `url(${imageUrl})`,
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center center',
-            // En desktop usamos fixed; en móvil lo simulamos con transform
-            backgroundAttachment: mobileParallax ? 'scroll' as any : 'fixed',
+            backgroundAttachment: 'fixed',
           }}
         />
-      </div>
+      )}
 
       {/* Overlay que se desvanece conforme se revela */}
       <div

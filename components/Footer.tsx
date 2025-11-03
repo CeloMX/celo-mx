@@ -10,7 +10,7 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             <CeloLogo width={200} height={45} className="text-celo-black" />
             <span className="font-italic text-2xl sm:text-3xl text-celo-black">
-              Mexico
+              México
             </span>
           </div>
         </div>
@@ -28,7 +28,7 @@ export default function Footer() {
                 placeholder="Email"
                 className="flex-1 px-4 py-3 rounded-lg border border-celo-border bg-white text-celo-black placeholder-celo-gray-500 focus:outline-none focus:ring-2 focus:ring-celo-lime"
               />
-              <button className="px-6 py-3 bg-celo-black text-white rounded-lg hover:bg-celo-gray-900 transition-colors">
+              <button className="px-6 py-3 bg-white dark:bg-transparent text-black dark:text-celo-yellow rounded-lg hover:bg-gray-100 dark:hover:bg-transparent transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -46,11 +46,13 @@ export default function Footer() {
             <div>
               <h3 className="font-display text-lg mb-4">Celo para</h3>
             <div className="space-y-2">
-                <a href="https://developers.celo.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Desarrolladores
+                <a href="https://developers.celo.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Desarrolladores</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
-                <a href="https://ai.celo.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  IA
+                <a href="https://ai.celo.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">IA</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
               </div>
             </div>
@@ -59,14 +61,17 @@ export default function Footer() {
             <div>
               <h3 className="font-display text-lg mb-4">Tecnología</h3>
               <div className="space-y-2">
-                <a href="https://docs.celo.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Documentación
+                <a href="https://docs.celo.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Documentación</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
-                <a href="https://reserve.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Reserva
+                <a href="https://reserve.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Reserva</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
-                <a href="https://mondo.celo.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Celo Mondo
+                <a href="https://mondo.celo.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Celo Mondo</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
               </div>
             </div>
@@ -75,11 +80,13 @@ export default function Footer() {
             <div>
               <h3 className="font-display text-lg mb-4">Empresa</h3>
               <div className="space-y-2">
-                <a href="https://celo.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Fundación
+                <a href="https://celo.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Fundación</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
-                <a href="https://celo.org/papers" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Documentos Técnicos
+                <a href="https://celo.org/papers" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Documentos Técnicos</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
               </div>
             </div>
@@ -88,8 +95,9 @@ export default function Footer() {
             <div>
               <h3 className="font-display text-lg mb-4">Recursos</h3>
               <div className="space-y-2">
-                <a href="https://brand.celo.org/" target="_blank" rel="noopener noreferrer" className="block px-2 py-1 bg-transparent border border-celo-border rounded-full text-xs font-bold hover:bg-celo-black hover:text-celoLegacy-yellow transition-colors text-center whitespace-normal">
-                  Kit de Marca
+                <a href="https://brand.celo.org/" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden block px-2 py-1 bg-transparent border-celo-fg dark:border-celo-yellow border-[0.3px] rounded-full text-xs font-bold text-black dark:text-celo-yellow transition-colors text-center whitespace-normal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+                  <span className="relative z-10 dark:group-hover:text-black">Kit de Marca</span>
+                  <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
                 </a>
               </div>
             </div>

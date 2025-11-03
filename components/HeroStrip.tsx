@@ -70,7 +70,6 @@ export default function HeroStrip() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.2 }}
             className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl celo-text mb-6 sm:mb-8 leading-tight"
-            style={{ fontFamily: 'GT Alpina VAR Trial, ui-serif, system-ui', fontWeight: 40 }}
           >
             Celo es una L2 líder de Ethereum. Enfocada para el impacto global, estamos escalando soluciones reales para todos.
           </motion.p>
@@ -86,9 +85,10 @@ export default function HeroStrip() {
               <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
             </Link>
 
-<a href="https://app.deform.cc/form/7d776831-8f8a-4fd6-81f7-b60227023c8c/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full px-8 py-4 text-base sm:text-lg font-bold bg-celoLegacy-yellow text-black hover:bg-celoLegacy-yellow/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-celoLegacy-yellow">
-aplica al buildathon
-            </a>
+            <Link href="/buildathon" className="group relative overflow-hidden rounded-full border-celo-fg dark:border-celo-yellow border-[0.3px] px-8 py-3 font-bold text-black dark:text-celo-yellow text-xs sm:text-sm bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0 inline-block">
+              <span className="relative z-10 dark:group-hover:text-black">Aplica al Buildathon</span>
+              <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
+            </Link>
             
             <button className="group flex items-center gap-2 celo-text font-medium text-sm sm:text-base hover:opacity-80 transition-all duration-200">
               <span>Únete a la comunidad</span>

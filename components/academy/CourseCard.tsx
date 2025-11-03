@@ -168,7 +168,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
             {/* CTA Button */}
             <Button 
               variant="outline"
-              className="w-full bg-transparent text-celoLegacy-yellow border border-celoLegacy-yellow font-medium py-2.5 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-celoLegacy-yellow/70 hover:bg-celoLegacy-yellow/10"
+              className="w-full bg-transparent text-black border border-black font-medium py-2.5 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-black/70 hover:bg-black/5 dark:bg-celo-yellow dark:text-black dark:border-transparent"
             >
               Ver curso
               <ArrowRight className="w-4 h-4" />

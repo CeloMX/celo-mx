@@ -2,27 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'GT Alpina Fine Standard Thin Trial';
-  src: url('/fonts/GT-Alpina-Fine-Standard-Thin-Trial.woff2') format('woff2');
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'GT Alpina VAR Trial';
-  src: url('/fonts/GT-Alpina-VAR-Trial.woff2') format('woff2');
-  font-weight: 40 900;
-  font-style: normal;
-  font-display: swap;
-}
+/* Reemplazo de GT Alpina por una pila serif del sistema con acentos */
 
 :root {
-  --font-display: 'GrilliEnd', ui-serif, system-ui;
+  --font-display: var(--font-title, 'Georgia', 'Times New Roman', serif);
   --font-body: 'Inter', ui-sans-serif, system-ui;
-  --font-title: 'GT Alpina Fine Standard Thin Trial', 'Georgia', 'Times New Roman', serif;
-  --font-italic: 'GT Alpina Fine Standard Thin Trial', 'Georgia', 'Times New Roman', serif;
 }
 
 @layer base {
@@ -110,24 +94,24 @@
   }
 
   h1, h2, h3, .font-display {
-    font-family: var(--font-title);
-    font-weight: 100;
+    font-family: var(--font-title, 'Georgia', 'Times New Roman', serif);
+    font-weight: 200;
   }
 
   .font-italic {
-    font-family: var(--font-italic);
-    font-weight: 100;
+    font-family: var(--font-title, 'Georgia', 'Times New Roman', serif);
+    font-weight: 200;
     font-style: italic;
   }
 
   .font-title {
-    font-family: var(--font-title);
-    font-weight: 100;
+    font-family: var(--font-title, 'Georgia', 'Times New Roman', serif);
+    font-weight: 200;
   }
 
   .font-title-italic {
-    font-family: var(--font-title);
-    font-weight: 100;
+    font-family: var(--font-title, 'Georgia', 'Times New Roman', serif);
+    font-weight: 200;
     font-style: italic;
   }
 }

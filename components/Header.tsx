@@ -22,7 +22,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
           <CeloLogo width={80} height={18} className="text-celo-yellow sm:w-[100px] sm:h-[22px]" />
           <span className="font-italic text-sm sm:text-lg text-celo-yellow">
-            Mexico
+            México
           </span>
         </Link>
         

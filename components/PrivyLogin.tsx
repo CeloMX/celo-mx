@@ -217,7 +217,7 @@ export default function PrivyLogin() {
           <div className="wallet-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] sm:hidden" onClick={() => setShowDropdown(false)} />
           
           {/* Dropdown/Modal */}
-          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:translate-y-0 sm:mt-2 w-auto sm:w-72 backdrop-blur-3xl bg-white/95 dark:bg-black/95 sm:bg-white/30 sm:dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-[100] overflow-hidden max-h-[90vh] sm:max-h-none overflow-y-auto">
+          <div className="fixed inset-x-4 top-[calc(50%+10px)] -translate-y-1/2 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:translate-y-0 sm:mt-2 w-auto sm:w-72 backdrop-blur-3xl bg-white/95 dark:bg-black/95 sm:bg-white/30 sm:dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-[100] overflow-hidden max-h-[90vh] sm:max-h-none overflow-y-auto">
           {/* Glassmorphism overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
           

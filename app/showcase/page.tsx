@@ -89,7 +89,7 @@ export default function ShowcasePage() {
                       {p.metadata?.chain && <span className="mr-3">Chain: {p.metadata.chain}</span>}
                       {p.metadata?.category && <span>Categoria: {p.metadata.category}</span>}
                     </div>
-                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium bg-celo-yellow hover:bg-celo-yellow/90 text-black px-3 py-2 rounded-lg">
+<a href={p.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium px-3 py-2 rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black dark:hover:bg-celo-yellow/90">
                       Visitar
                     </a>
                   </div>

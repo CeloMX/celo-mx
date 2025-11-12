@@ -299,7 +299,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     // Allow images from common CDNs and YouTube thumbnails used in course previews
-    "img-src 'self' data: blob: https://i.postimg.cc https://res.cloudinary.com https://images.unsplash.com https://via.placeholder.com https://img.youtube.com https://i.ytimg.com",
+    "img-src 'self' https: data: blob:",
     // Allow on-chain/RPC and auth connections required for web3 + Privy + WalletConnect
     "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io",
     // Allow embedded frames for Privy and video providers used in course pages

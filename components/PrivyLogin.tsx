@@ -148,9 +148,13 @@ export default function PrivyLogin() {
     }
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (desktop only, mobile uses backdrop)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Skip if clicking on backdrop (handled by backdrop onClick)
+      if ((event.target as HTMLElement).classList?.contains('wallet-backdrop')) {
+        return;
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
@@ -206,9 +210,14 @@ export default function PrivyLogin() {
         <ChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform text-celo-black/70 dark:text-celo-yellow/70 ${showDropdown ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu - Glassmorphism */}
+      {/* Mobile: Full-screen modal | Desktop: Dropdown */}
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-2 w-[90vw] sm:w-72 max-w-sm backdrop-blur-3xl bg-white/30 dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-[100] overflow-hidden">
+        <>
+          {/* Mobile backdrop */}
+          <div className="wallet-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] sm:hidden" onClick={() => setShowDropdown(false)} />
+          
+          {/* Dropdown/Modal */}
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:translate-y-0 sm:mt-2 w-auto sm:w-72 backdrop-blur-3xl bg-white/95 dark:bg-black/95 sm:bg-white/30 sm:dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-[100] overflow-hidden max-h-[90vh] sm:max-h-none overflow-y-auto">
           {/* Glassmorphism overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
           
@@ -304,6 +313,7 @@ export default function PrivyLogin() {
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   );

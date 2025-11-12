@@ -58,14 +58,25 @@ export function useAuth(): UseAuthReturn {
           if (token) {
             localStorage.setItem('privy-token', token);
             
-            // Also set as cookie for SSR
-            document.cookie = `privy-token=${token}; path=/; max-age=86400; SameSite=strict`;
+            // Also set as cookie for SSR - environment-aware secure flag
+            const isProduction = window.location.protocol === 'https:';
+            const cookieOptions = `path=/; max-age=86400; SameSite=lax${isProduction ? '; secure' : ''}`;
+            document.cookie = `privy-token=${token}; ${cookieOptions}`;
           }
 
           // Persist current wallet address in a cookie for SSR admin checks
           const currentWallet = (wallet as any)?.address;
           if (currentWallet) {
-            document.cookie = `wallet-address=${currentWallet}; path=/; max-age=86400; SameSite=strict`;
+            const isProduction = window.location.protocol === 'https:';
+            const cookieOptions = `path=/; max-age=86400; SameSite=lax${isProduction ? '; secure' : ''}`;
+            document.cookie = `wallet-address=${currentWallet}; ${cookieOptions}`;
+            // Also cache admin status once verified
+            const isAdminUser = checkAdminRole();
+            if (isAdminUser) {
+              sessionStorage.setItem('is-admin', 'true');
+            } else {
+              sessionStorage.removeItem('is-admin');
+            }
           }
         } catch (error) {
           console.error('Failed to get access token:', error);
@@ -74,6 +85,7 @@ export function useAuth(): UseAuthReturn {
       } else {
         setAccessToken(null);
         localStorage.removeItem('privy-token');
+        sessionStorage.removeItem('is-admin');
         // Clear cookies
         document.cookie = 'privy-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         document.cookie = 'wallet-address=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';

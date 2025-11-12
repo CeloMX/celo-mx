@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Users, Settings, Home, Plus, List, LogOut, User } from 'lucide-react';
@@ -22,13 +22,25 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Always call the hook (React Hook rules)
   const authData = useRequireAdmin();
-  const { user, wallet, logout, isLoading } = authData;
+  const { user, wallet, logout, isLoading, isAuthenticated, isAdmin } = authData;
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  if (isLoading) {
+  // Check if user was previously verified as admin (from sessionStorage)
+  const cachedAdminStatus = typeof window !== 'undefined' ? sessionStorage.getItem('is-admin') === 'true' : false;
+  
+  // Mark as loaded after first render to prevent flicker on navigation
+  useEffect(() => {
+    if (isAuthenticated || cachedAdminStatus) {
+      setIsInitialLoad(false);
+    }
+  }, [isAuthenticated, cachedAdminStatus]);
+
+  // Only show loading on initial page load, not on navigation
+  if (isInitialLoad && (isLoading || (!isAuthenticated && !cachedAdminStatus))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">

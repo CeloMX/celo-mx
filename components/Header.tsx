@@ -43,6 +43,13 @@ export default function Header() {
               Marketplace
               <span className="absolute -bottom-2 left-0 w-full h-[0.5px] bg-celo-muted transition-all duration-400 ease-out group-hover:bottom-0 opacity-0 group-hover:opacity-100"></span>
             </Link>
+            <Link 
+              href="/proyectos" 
+              className="text-celo-fg font-medium relative group transition-all duration-200"
+            >
+              Proyectos
+              <span className="absolute -bottom-2 left-0 w-full h-[0.5px] bg-celo-muted transition-all duration-400 ease-out group-hover:bottom-0 opacity-0 group-hover:opacity-100"></span>
+            </Link>
             <a 
               href="https://forum.celo.org" 
               target="_blank" 
@@ -98,6 +105,13 @@ export default function Header() {
               className="text-celo-fg font-medium py-2 transition-colors duration-200 hover:opacity-70"
             >
               Marketplace
+            </Link>
+            <Link 
+              href="/proyectos" 
+              onClick={closeMenu}
+              className="text-celo-fg font-medium py-2 transition-colors duration-200 hover:opacity-70"
+            >
+              Proyectos
             </Link>
             <a 
               href="https://forum.celo.org" 

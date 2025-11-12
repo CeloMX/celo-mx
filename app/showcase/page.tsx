@@ -103,7 +103,7 @@ export default function ShowcasePage() {
         <section className="bg-celo-bg border border-celo-border rounded-2xl p-6 md:p-8 text-center">
           <h3 className="text-2xl font-display font-bold text-celo-fg">¿Quieres lanzar sobre Celo?</h3>
           <p className="text-celo-muted mt-2 max-w-2xl mx-auto">Integramos AA, gasless, pagos y UX lista para producción. Escríbenos y arrancamos.</p>
-          <a href="/contact" className="inline-block mt-4 px-5 py-2 rounded-lg bg-celo-yellow text-black font-medium hover:bg-celo-yellow/90">Hablar con el equipo</a>
+<a href="https://t.me/celomexico" target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-sm font-medium px-5 py-2 rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black dark:hover:bg-celo-yellow/90">Hablar con el equipo</a>
         </section>
       </div>
     </div>

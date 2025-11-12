@@ -132,9 +132,7 @@ export default function Header() {
           </nav>
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-celo-border">
             <ThemeToggle />
-            <div onClick={closeMenu}>
-              <PrivyLogin />
-            </div>
+            <PrivyLogin />
           </div>
         </div>
       </div>

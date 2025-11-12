@@ -11,6 +11,12 @@ const NODE_ENV = process.env.NODE_ENV;
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 /**
+ * Admin session cache - avoid repeated auth checks for same session
+ */
+const adminSessionCache = new Map<string, { isAdmin: boolean; expiresAt: number }>();
+const SESSION_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
  * Rate limiting configuration
  */
 const RATE_LIMIT_CONFIG = {
@@ -236,6 +242,30 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     console.log(`[DEBUG] Checking auth for protected route: ${pathname}`);
     console.log(`[DEBUG] isAdminPage: ${isAdminPage}, isAdminAPI: ${isAdminAPI}, isProtectedAPI: ${isProtectedAPI}`);
     
+    // Check session cache first for admin pages
+    const cookiesHeader = request.headers.get('cookie');
+    let cachedAdminStatus: { isAdmin: boolean; expiresAt: number } | undefined;
+    if (cookiesHeader && (isAdminPage || isAdminAPI)) {
+      const walletMatch = cookiesHeader.match(/wallet-address=([^;]+)/);
+      const walletAddress = walletMatch ? decodeURIComponent(walletMatch[1]) : null;
+      if (walletAddress) {
+        const cacheKey = `admin:${walletAddress}`;
+        cachedAdminStatus = adminSessionCache.get(cacheKey);
+        if (cachedAdminStatus && cachedAdminStatus.expiresAt > Date.now()) {
+          console.log(`[DEBUG] Using cached admin status for ${walletAddress}`);
+          // Allow access immediately from cache
+          if (cachedAdminStatus.isAdmin) {
+            console.log(`[DEBUG] Cached admin access granted for: ${pathname}`);
+            const response = NextResponse.next();
+            return response;
+          }
+        } else if (cachedAdminStatus) {
+          // Expired cache entry
+          adminSessionCache.delete(cacheKey);
+        }
+      }
+    }
+    
     const authResult = await validateUserAuth(request);
     console.log(`[DEBUG] Auth result:`, {
       isAuthenticated: authResult.isAuthenticated,
@@ -243,6 +273,20 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       error: authResult.error,
       hasUser: !!authResult.user
     });
+    
+    // Cache admin status if successful
+    if (authResult.isAuthenticated && authResult.isAdmin && cookiesHeader) {
+      const walletMatch = cookiesHeader.match(/wallet-address=([^;]+)/);
+      const walletAddress = walletMatch ? decodeURIComponent(walletMatch[1]) : null;
+      if (walletAddress) {
+        const cacheKey = `admin:${walletAddress}`;
+        adminSessionCache.set(cacheKey, {
+          isAdmin: true,
+          expiresAt: Date.now() + SESSION_CACHE_TTL
+        });
+        console.log(`[DEBUG] Cached admin status for ${walletAddress}`);
+      }
+    }
     
     if (!authResult.isAuthenticated) {
       logSecurityEvent('AUTHENTICATION_FAILED', request, { error: authResult.error });

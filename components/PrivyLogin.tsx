@@ -208,7 +208,7 @@ export default function PrivyLogin() {
 
       {/* Dropdown Menu - Glassmorphism */}
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 backdrop-blur-3xl bg-white/30 dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-[90vw] sm:w-72 max-w-sm backdrop-blur-3xl bg-white/30 dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-[100] overflow-hidden">
           {/* Glassmorphism overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
           

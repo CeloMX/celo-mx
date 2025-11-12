@@ -13,6 +13,63 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
+
+function RegisterSmartAccountButton({ onDone }: { onDone?: () => void }) {
+  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
+  const auth = useAuth();
+  const [status, setStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const register = async () => {
+    if (!smartAccountAddress) return;
+    setStatus('saving');
+    setError(null);
+    try {
+      const res = await fetch('/api/users/smart-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          smartAccount: smartAccountAddress.toLowerCase(),
+          walletAddress: (auth.wallet?.address || '').toLowerCase(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save');
+      }
+      setStatus('saved');
+      setTimeout(() => {
+        setStatus('idle');
+        onDone?.();
+      }, 800);
+    } catch (e: any) {
+      setError(e.message || 'Error');
+      setStatus('error');
+    }
+  };
+
+  if (!isSmartAccountReady || !smartAccountAddress) {
+    return (
+      <button disabled className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 dark:text-celo-yellow/60 bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl cursor-not-allowed">
+        <Wallet className="w-4 h-4" />
+        <span>Smart account no disponible</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={register}
+      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-celo-yellow bg-black hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black rounded-xl transition-colors border border-celo-yellow"
+    >
+      <Wallet className="w-4 h-4" />
+      <span>
+        {status === 'saving' ? 'Guardando…' : status === 'saved' ? 'Registrado ✓' : 'Registrar Smart Account'}
+      </span>
+    </button>
+  );
+}
 
 export default function PrivyLogin() {
   const router = useRouter();
@@ -220,6 +277,9 @@ export default function PrivyLogin() {
             </div>
 
             <div className="border-t border-white/10 pt-4 space-y-2">
+              {/* Register smart account */}
+              <RegisterSmartAccountButton onDone={() => setShowDropdown(false)} />
+
               {/* Account Button */}
               <button
                 onClick={() => {

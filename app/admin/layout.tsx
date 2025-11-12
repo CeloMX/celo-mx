@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Courses', href: '/admin/courses', icon: BookOpen },
   { name: 'Create Course', href: '/admin/courses/create', icon: Plus },
   { name: 'Instructors', href: '/admin/instructors', icon: Users },
+  { name: 'Smart Accounts', href: '/admin/smart-accounts', icon: List },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

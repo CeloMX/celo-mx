@@ -30,8 +30,8 @@ export function AuthCookieSync() {
               (account: any) => account.type === 'wallet'
             );
             
-            if (wallet?.address) {
-              document.cookie = `wallet-address=${wallet.address}; ${cookieOptions}`;
+            if (wallet && 'address' in wallet) {
+              document.cookie = `wallet-address=${(wallet as { address: string }).address}; ${cookieOptions}`;
             }
 
             console.log('[AuthCookieSync] Tokens synced to cookies');

@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function PortfolioPage() {
   const router = useRouter();
   const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
-  const { balances, isLoading } = useTokenBalances(smartAccountAddress);
+  const { balances, isLoading } = useTokenBalances(smartAccountAddress ?? undefined);
   const { isAuthenticated } = useAuth();
   const [copied, setCopied] = useState(false);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);

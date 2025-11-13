@@ -80,7 +80,7 @@ export default function PrivyLogin() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
-  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress);
+  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress ?? undefined);
   
   // Emergency reset function for stuck sessions
   const forceReset = () => {

@@ -364,6 +364,19 @@ export default function PrivyLogin() {
               {/* Register smart account */}
               <RegisterSmartAccountButton onDone={() => setShowDropdown(false)} />
 
+              {/* Portfolio Button */}
+              <button
+                onClick={() => {
+                  router.push('/portfolio');
+                  setShowDropdown(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-celo-black dark:text-celo-yellow hover:bg-white/30 dark:hover:bg-black/30 rounded-xl transition-all duration-200 backdrop-blur-lg group font-medium"
+              >
+                <Coins className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Portafolio</span>
+                <ExternalLink className="w-3 h-3 ml-auto opacity-60 group-hover:opacity-100 transition-opacity" />
+              </button>
+
               {/* Account Button */}
               <button
                 onClick={() => {

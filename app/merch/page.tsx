@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShoppingCart, Wallet, Check, X } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Wallet, Check, X, ExternalLink } from 'lucide-react';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,8 +19,24 @@ export default function MerchPage() {
   const [shippingAddress, setShippingAddress] = useState('');
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [txHash, setTxHash] = useState<string>('');
+  const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
 
   const cmtBalance = balances.find(b => b.symbol === 'CMT');
+
+  // Load purchases from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('merch-purchases');
+    if (stored) {
+      try {
+        setPurchases(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse purchases:', e);
+      }
+    }
+  }, []);
+
+  const isPurchased = (itemId: string) => !!purchases[itemId];
 
   const handlePurchase = async () => {
     if (!selectedItem || !smartAccountAddress) return;
@@ -48,13 +64,22 @@ export default function MerchPage() {
       // Placeholder for actual transaction
       await new Promise(resolve => setTimeout(resolve, 2000));
 
+      // Mock transaction hash (replace with actual tx hash from ZeroDev)
+      const mockTxHash = `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+      setTxHash(mockTxHash);
+
+      // Save purchase to localStorage
+      const newPurchases = {
+        ...purchases,
+        [selectedItem.id]: {
+          txHash: mockTxHash,
+          timestamp: Date.now(),
+        },
+      };
+      setPurchases(newPurchases);
+      localStorage.setItem('merch-purchases', JSON.stringify(newPurchases));
+
       setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        setSelectedItem(null);
-        setSelectedSize('');
-        setShippingAddress('');
-      }, 3000);
     } catch (error) {
       console.error('Purchase error:', error);
       alert('Error al procesar la compra');
@@ -118,8 +143,13 @@ export default function MerchPage() {
           {merchItems.map((item) => (
             <div
               key={item.id}
-              className="bg-white dark:bg-black/50 border border-celo-border rounded-2xl overflow-hidden hover:border-celo-yellow transition"
+              className="bg-white dark:bg-black/50 border border-celo-border rounded-2xl overflow-hidden hover:border-celo-yellow transition relative"
             >
+              {isPurchased(item.id) && (
+                <div className="absolute top-4 right-4 z-10 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  ✓ Comprado
+                </div>
+              )}
               <div className="aspect-square bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center relative">
                 <img
                   src={item.image}
@@ -134,12 +164,23 @@ export default function MerchPage() {
                   <div className="text-2xl font-bold text-celo-fg">
                     {item.price} <span className="text-lg text-celo-yellow">CMT</span>
                   </div>
-                  <button
-                    onClick={() => setSelectedItem(item)}
-                    className="px-6 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
-                  >
-                    Comprar
-                  </button>
+                  {isPurchased(item.id) ? (
+                    <a
+                      href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-6 py-2 bg-green-500/20 text-green-600 dark:text-green-400 font-semibold rounded-xl hover:bg-green-500/30 transition"
+                    >
+                      Ver TX <ExternalLink className="w-4 h-4" />
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => setSelectedItem(item)}
+                      className="px-6 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+                    >
+                      Comprar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -170,7 +211,17 @@ export default function MerchPage() {
                     <Check className="w-8 h-8 text-green-500" />
                   </div>
                   <h3 className="text-xl font-bold text-celo-fg mb-2">¡Compra exitosa!</h3>
-                  <p className="text-celo-muted">Tu pedido ha sido procesado</p>
+                  <p className="text-celo-muted mb-4">Tu pedido ha sido procesado</p>
+                  {txHash && (
+                    <a
+                      href={`https://celoscan.io/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-celo-yellow hover:underline text-sm"
+                    >
+                      Ver transacción en CeloScan <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">

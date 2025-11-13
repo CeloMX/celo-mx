@@ -301,7 +301,7 @@ export default function PrivyLogin() {
               </div>
             </div>
 
-            {/* Smart Account Portfolio */}
+            {/* Smart Account */}
             {isSmartAccountReady && smartAccountAddress && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs font-semibold text-celo-black dark:text-celo-yellow">
@@ -309,7 +309,6 @@ export default function PrivyLogin() {
                   <span>Smart Account</span>
                 </div>
                 
-                {/* Smart Account Address */}
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white/25 dark:bg-black/25 border border-white/30 dark:border-white/25 backdrop-blur-md">
                   <span className="font-mono text-xs text-celo-black dark:text-celo-yellow font-semibold">{truncate(smartAccountAddress)}</span>
                   <button
@@ -325,37 +324,6 @@ export default function PrivyLogin() {
                       <Copy className="w-3 h-3" />
                     )}
                   </button>
-                </div>
-
-                {/* Token Balances */}
-                <div className="space-y-2">
-                  {balancesLoading ? (
-                    <div className="flex items-center justify-center p-3 text-xs text-celo-black/70 dark:text-celo-yellow/70">
-                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
-                      Cargando balances...
-                    </div>
-                  ) : balances.length > 0 ? (
-                    balances.map((token) => (
-                      <div key={token.symbol} className="flex items-center justify-between p-2 rounded-lg bg-white/15 dark:bg-black/15">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-celo-yellow/20 flex items-center justify-center text-xs font-bold text-celo-black dark:text-celo-yellow">
-                            {token.symbol.slice(0, 2)}
-                          </div>
-                          <div>
-                            <div className="text-xs font-semibold text-celo-black dark:text-celo-yellow">{token.symbol}</div>
-                            <div className="text-[10px] text-celo-black/60 dark:text-celo-yellow/60">{token.name}</div>
-                          </div>
-                        </div>
-                        <div className="text-xs font-mono font-semibold text-celo-black dark:text-celo-yellow">
-                          {token.formattedBalance}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-xs text-center p-2 text-celo-black/70 dark:text-celo-yellow/70">
-                      No se encontraron balances
-                    </div>
-                  )}
                 </div>
               </div>
             )}

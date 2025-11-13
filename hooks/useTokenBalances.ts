@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
-import tokenConfig from '@/config/tokens.json';
+import { tokens } from '@/config/tokens';
 
 export interface TokenBalance {
   symbol: string;
@@ -44,7 +44,7 @@ export function useTokenBalances(address?: string) {
       setError(null);
 
       try {
-        const balancePromises = tokenConfig.tokens.map(async (token) => {
+        const balancePromises = tokens.map(async (token) => {
           try {
             let balance: bigint;
 

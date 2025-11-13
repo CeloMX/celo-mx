@@ -9,11 +9,13 @@ import {
   Wallet, 
   ExternalLink,
   ChevronDown,
-  Globe
+  Globe,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
 
 function RegisterSmartAccountButton({ onDone }: { onDone?: () => void }) {
   const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
@@ -74,8 +76,11 @@ function RegisterSmartAccountButton({ onDone }: { onDone?: () => void }) {
 export default function PrivyLogin() {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [copiedSmart, setCopiedSmart] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
+  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress);
   
   // Emergency reset function for stuck sessions
   const forceReset = () => {
@@ -136,6 +141,17 @@ export default function PrivyLogin() {
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy address:', err);
+    }
+  };
+
+  const copySmartAddress = async () => {
+    if (!smartAccountAddress) return;
+    try {
+      await navigator.clipboard.writeText(smartAccountAddress);
+      setCopiedSmart(true);
+      setTimeout(() => setCopiedSmart(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy smart account address:', err);
     }
   };
 
@@ -284,6 +300,65 @@ export default function PrivyLogin() {
                 <span className="text-sm text-celo-black dark:text-celo-yellow font-semibold">Celo Mainnet</span>
               </div>
             </div>
+
+            {/* Smart Account Portfolio */}
+            {isSmartAccountReady && smartAccountAddress && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-celo-black dark:text-celo-yellow">
+                  <Coins className="w-3 h-3" />
+                  <span>Smart Account</span>
+                </div>
+                
+                {/* Smart Account Address */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/25 dark:bg-black/25 border border-white/30 dark:border-white/25 backdrop-blur-md">
+                  <span className="font-mono text-xs text-celo-black dark:text-celo-yellow font-semibold">{truncate(smartAccountAddress)}</span>
+                  <button
+                    onClick={copySmartAddress}
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs bg-white/30 hover:bg-white/40 border border-white/40 rounded-lg transition-all duration-200 backdrop-blur-lg text-celo-black dark:text-celo-yellow font-medium"
+                  >
+                    {copiedSmart ? (
+                      <>
+                        <Check className="w-3 h-3 text-green-400" />
+                        <span className="text-green-400 font-medium">✓</span>
+                      </>
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Token Balances */}
+                <div className="space-y-2">
+                  {balancesLoading ? (
+                    <div className="flex items-center justify-center p-3 text-xs text-celo-black/70 dark:text-celo-yellow/70">
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                      Cargando balances...
+                    </div>
+                  ) : balances.length > 0 ? (
+                    balances.map((token) => (
+                      <div key={token.symbol} className="flex items-center justify-between p-2 rounded-lg bg-white/15 dark:bg-black/15">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-celo-yellow/20 flex items-center justify-center text-xs font-bold text-celo-black dark:text-celo-yellow">
+                            {token.symbol.slice(0, 2)}
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-celo-black dark:text-celo-yellow">{token.symbol}</div>
+                            <div className="text-[10px] text-celo-black/60 dark:text-celo-yellow/60">{token.name}</div>
+                          </div>
+                        </div>
+                        <div className="text-xs font-mono font-semibold text-celo-black dark:text-celo-yellow">
+                          {token.formattedBalance}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-xs text-center p-2 text-celo-black/70 dark:text-celo-yellow/70">
+                      No se encontraron balances
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="border-t border-white/10 pt-4 space-y-2">
               {/* Register smart account */}

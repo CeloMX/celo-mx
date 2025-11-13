@@ -6,13 +6,15 @@ import { ArrowLeft, ShoppingCart, Wallet, Check, X, ExternalLink } from 'lucide-
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
+import { usePrivy } from '@privy-io/react-auth';
 import { merchItems, MERCHANT_ADDRESS, MerchItem } from '@/config/merch';
 import Image from 'next/image';
 
 export default function MerchPage() {
   const router = useRouter();
+  const { ready: privyReady, authenticated: privyAuth } = usePrivy();
   const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
-  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress ?? undefined);
+  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress);
   const { isAuthenticated } = useAuth();
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
@@ -73,6 +75,19 @@ export default function MerchPage() {
     }
   };
 
+  // Show loading while Privy initializes
+  if (!privyReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-celo-bg">
+        <div className="text-center">
+          <RefreshCw className="w-16 h-16 mx-auto mb-4 text-celo-yellow animate-spin" />
+          <h2 className="text-2xl font-bold text-celo-fg mb-2">Cargando...</h2>
+          <p className="text-celo-muted">Iniciando aplicación</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-celo-bg">
@@ -86,6 +101,18 @@ export default function MerchPage() {
           >
             Ir al Inicio
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSmartAccountReady || !smartAccountAddress) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-celo-bg">
+        <div className="text-center">
+          <RefreshCw className="w-16 h-16 mx-auto mb-4 text-celo-yellow animate-spin" />
+          <h2 className="text-2xl font-bold text-celo-fg mb-2">Preparando Smart Account...</h2>
+          <p className="text-celo-muted">Configurando tu cuenta gasless</p>
         </div>
       </div>
     );

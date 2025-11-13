@@ -12,14 +12,9 @@ import Image from 'next/image';
 export default function MerchPage() {
   const router = useRouter();
   const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
-  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress);
+  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress ?? undefined);
   const { isAuthenticated } = useAuth();
-  const [selectedItem, setSelectedItem] = useState<MerchItem | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [txHash, setTxHash] = useState<string>('');
+  const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
 
   const cmtBalance = balances.find(b => b.symbol === 'CMT');
@@ -38,27 +33,18 @@ export default function MerchPage() {
 
   const isPurchased = (itemId: string) => !!purchases[itemId];
 
-  const handlePurchase = async () => {
-    if (!selectedItem || !smartAccountAddress) return;
-    if (selectedItem.sizes && !selectedSize) {
-      alert('Por favor selecciona una talla');
-      return;
-    }
-    if (!shippingAddress.trim()) {
-      alert('Por favor ingresa una dirección de envío');
-      return;
-    }
+  const handlePurchase = async (item: MerchItem) => {
+    if (!smartAccountAddress) return;
+    if (isPurchased(item.id)) return;
 
-    setIsPurchasing(true);
+    setPurchasingItem(item.id);
     try {
       // TODO: Implement gasless CMT transfer via ZeroDev
       console.log('Purchasing:', {
-        item: selectedItem.name,
-        price: selectedItem.price,
-        size: selectedSize,
+        item: item.name,
+        price: item.price,
         from: smartAccountAddress,
         to: MERCHANT_ADDRESS,
-        shippingAddress,
       });
 
       // Placeholder for actual transaction
@@ -66,12 +52,11 @@ export default function MerchPage() {
 
       // Mock transaction hash (replace with actual tx hash from ZeroDev)
       const mockTxHash = `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-      setTxHash(mockTxHash);
 
       // Save purchase to localStorage
       const newPurchases = {
         ...purchases,
-        [selectedItem.id]: {
+        [item.id]: {
           txHash: mockTxHash,
           timestamp: Date.now(),
         },
@@ -79,12 +64,12 @@ export default function MerchPage() {
       setPurchases(newPurchases);
       localStorage.setItem('merch-purchases', JSON.stringify(newPurchases));
 
-      setShowSuccess(true);
+      alert(`✓ Compra exitosa! Ver transacción: https://celoscan.io/tx/${mockTxHash}`);
     } catch (error) {
       console.error('Purchase error:', error);
       alert('Error al procesar la compra');
     } finally {
-      setIsPurchasing(false);
+      setPurchasingItem(null);
     }
   };
 
@@ -175,10 +160,11 @@ export default function MerchPage() {
                     </a>
                   ) : (
                     <button
-                      onClick={() => setSelectedItem(item)}
-                      className="px-6 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+                      onClick={() => handlePurchase(item)}
+                      disabled={purchasingItem === item.id}
+                      className="px-6 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Comprar
+                      {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
                     </button>
                   )}
                 </div>
@@ -187,104 +173,6 @@ export default function MerchPage() {
           ))}
         </div>
 
-        {/* Purchase Modal */}
-        {selectedItem && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-black/95 border border-celo-border rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-celo-fg">Comprar {selectedItem.name}</h2>
-                <button
-                  onClick={() => {
-                    setSelectedItem(null);
-                    setSelectedSize('');
-                    setShippingAddress('');
-                  }}
-                  className="p-2 hover:bg-celo-border rounded-lg transition"
-                >
-                  <X className="w-5 h-5 text-celo-fg" />
-                </button>
-              </div>
-
-              {showSuccess ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-8 h-8 text-green-500" />
-                  </div>
-                  <h3 className="text-xl font-bold text-celo-fg mb-2">¡Compra exitosa!</h3>
-                  <p className="text-celo-muted mb-4">Tu pedido ha sido procesado</p>
-                  {txHash && (
-                    <a
-                      href={`https://celoscan.io/tx/${txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-celo-yellow hover:underline text-sm"
-                    >
-                      Ver transacción en CeloScan <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-celo-yellow/10 border border-celo-yellow/30 rounded-xl">
-                    <p className="text-sm text-celo-muted mb-1">Precio</p>
-                    <p className="text-2xl font-bold text-celo-fg">
-                      {selectedItem.price} <span className="text-celo-yellow">CMT</span>
-                    </p>
-                  </div>
-
-                  {selectedItem.sizes && (
-                    <div>
-                      <label className="block text-sm font-medium text-celo-fg mb-2">
-                        Talla
-                      </label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {selectedItem.sizes.map((size) => (
-                          <button
-                            key={size}
-                            onClick={() => setSelectedSize(size)}
-                            className={`py-2 rounded-lg font-semibold transition ${
-                              selectedSize === size
-                                ? 'bg-celo-yellow text-black'
-                                : 'bg-celo-bg border border-celo-border text-celo-fg hover:border-celo-yellow'
-                            }`}
-                          >
-                            {size}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-celo-fg mb-2">
-                      Dirección de envío
-                    </label>
-                    <textarea
-                      value={shippingAddress}
-                      onChange={(e) => setShippingAddress(e.target.value)}
-                      placeholder="Calle, número, colonia, ciudad, estado, código postal..."
-                      rows={4}
-                      className="w-full px-4 py-3 bg-celo-bg border border-celo-border rounded-xl text-celo-fg focus:border-celo-yellow focus:outline-none resize-none"
-                    />
-                  </div>
-
-                  <div className="pt-4">
-                    <button
-                      onClick={handlePurchase}
-                      disabled={isPurchasing || (selectedItem.sizes && !selectedSize) || !shippingAddress.trim()}
-                      className="w-full px-6 py-3 bg-celo-yellow text-black rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isPurchasing ? 'Procesando...' : `Pagar ${selectedItem.price} CMT`}
-                    </button>
-                    <p className="text-xs text-center text-celo-muted mt-3">
-                      ⚡ Transacción sin gas · Powered by ZeroDev
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

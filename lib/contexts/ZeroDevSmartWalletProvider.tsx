@@ -60,6 +60,7 @@ export const ZeroDevSmartWalletProvider = ({
   >(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   console.log('[ZERODEV] Using FORCED mainnet chain:', FORCED_CHAIN.name, 'ID:', FORCED_CHAIN.id);
 
@@ -95,12 +96,35 @@ export const ZeroDevSmartWalletProvider = ({
     }
   };
 
+  // Helper function to check if smart account already exists
+  const checkExistingSmartAccount = async (walletAddress: string): Promise<string | null> => {
+    try {
+      // Check localStorage for existing smart account address
+      const existingSmartAccount = localStorage.getItem(`zerodev-smart-account-${walletAddress.toLowerCase()}`);
+      if (existingSmartAccount) {
+        console.log('[ZERODEV] Found existing smart account in storage:', existingSmartAccount);
+        return existingSmartAccount;
+      }
+      return null;
+    } catch (error) {
+      console.error('[ZERODEV] Error checking existing smart account:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const initializeSmartWallet = async () => {
       if (!authenticated || !wallets || wallets.length === 0) {
         setKernelClient(null);
         setSmartAccountAddress(null);
         setIsInitializing(false);
+        setHasInitialized(false);
+        return;
+      }
+
+      // Prevent multiple initializations
+      if (isInitializing || hasInitialized) {
+        console.log('[ZERODEV] Already initializing or initialized, skipping...');
         return;
       }
 
@@ -109,26 +133,60 @@ export const ZeroDevSmartWalletProvider = ({
         setError(null);
         console.log('[ZERODEV] Initializing smart wallet with wallets:', wallets.length);
         
-        // Get EntryPoint v0.7 from ZeroDev SDK
-        const entryPoint = getEntryPoint('0.7');
+        // DETERMINISTIC WALLET SELECTION WITH PERSISTENCE
+        // Check if we have a previously selected wallet address stored
+        const storedWalletAddress = localStorage.getItem('zerodev-selected-wallet');
+        let walletToUse = null;
         
-        // Look for either embedded wallet (email login) or connected wallet (MetaMask login)
-        const embeddedWallet = wallets.find((wallet) => wallet.walletClientType === 'privy');
-        const connectedWallet = wallets.find((wallet) => wallet.walletClientType !== 'privy');
+        if (storedWalletAddress) {
+          // Try to find the previously used wallet first
+          walletToUse = wallets.find(wallet => wallet.address.toLowerCase() === storedWalletAddress.toLowerCase());
+          console.log('[ZERODEV] Found stored wallet address:', storedWalletAddress, 'Available:', !!walletToUse);
+        }
         
-        const walletToUse = embeddedWallet || connectedWallet;
         if (!walletToUse) {
-          console.log('[ZERODEV] No wallet found for smart account creation');
+          // If no stored wallet or stored wallet not available, use deterministic selection
+          // Sort wallets by a consistent criteria to ensure deterministic selection
+          const sortedWallets = [...wallets].sort((a, b) => {
+            // First, prioritize by wallet type (embedded wallets first for consistency)
+            if (a.walletClientType === 'privy' && b.walletClientType !== 'privy') return -1;
+            if (a.walletClientType !== 'privy' && b.walletClientType === 'privy') return 1;
+            
+            // Then sort by address to ensure consistent ordering
+            return a.address.localeCompare(b.address);
+          });
+          
+          walletToUse = sortedWallets[0]; // Always use the first wallet after sorting
+          
+          // Store the selected wallet address for future consistency
+          if (walletToUse) {
+            localStorage.setItem('zerodev-selected-wallet', walletToUse.address);
+            console.log('[ZERODEV] Stored wallet address for future use:', walletToUse.address);
+          }
+        }
+        
+        if (!walletToUse) {
+          console.log('[ZERODEV] No wallet found for smart account connection');
           setIsInitializing(false);
           return;
         }
-        
-        console.log('[ZERODEV] Found wallet:', {
+
+        console.log('[ZERODEV] Selected wallet:', {
           address: walletToUse.address,
           type: walletToUse.walletClientType,
-          isEmbedded: !!embeddedWallet,
-          isConnected: !!connectedWallet
+          isEmbedded: walletToUse.walletClientType === 'privy',
         });
+
+        // Check if we already have a smart account for this wallet
+        const existingSmartAccount = await checkExistingSmartAccount(walletToUse.address);
+        if (existingSmartAccount) {
+          console.log('[ZERODEV] ✅ Found existing smart account:', existingSmartAccount);
+        } else {
+          console.log('[ZERODEV] No existing smart account found, will create new one...');
+        }
+        
+        // Get EntryPoint v0.7 from ZeroDev SDK
+        const entryPoint = getEntryPoint('0.7');
         
         // Get the EIP1193 provider from the selected wallet
         const provider = await walletToUse.getEthereumProvider();
@@ -175,6 +233,14 @@ export const ZeroDevSmartWalletProvider = ({
         const bundlerUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}`;
         const paymasterUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}`;
 
+        console.log('[ZERODEV] URLs configured:', {
+          bundlerUrl,
+          paymasterUrl,
+          projectId: zeroDevProjectId,
+          chainId: FORCED_CHAIN.id,
+          chainName: FORCED_CHAIN.name
+        });
+
         console.log('[ZERODEV] Creating paymaster client...');
         
         // Create paymaster client following ZeroDev docs pattern
@@ -198,10 +264,23 @@ export const ZeroDevSmartWalletProvider = ({
         console.log("[ZERODEV] Chain ID:", await client.getChainId());
 
         setKernelClient(client);
-        setSmartAccountAddress(account.address);
+        
+        // Set the smart account address (either existing or newly created)
+        const finalSmartAccountAddress = existingSmartAccount || account.address;
+        
+        // Store the smart account address for future use if it's new
+        if (!existingSmartAccount) {
+          localStorage.setItem(`zerodev-smart-account-${walletToUse.address.toLowerCase()}`, account.address);
+          console.log('[ZERODEV] Stored new smart account address for wallet:', walletToUse.address, '->', account.address);
+        }
+        
+        setSmartAccountAddress(finalSmartAccountAddress as `0x${string}`);
+        setHasInitialized(true);
+        console.log('[ZERODEV] 🎉 Smart wallet initialization complete!');
       } catch (err) {
         console.error("[ZERODEV] ❌ Error initializing smart wallet:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
+        setHasInitialized(false);
       } finally {
         setIsInitializing(false);
       }
@@ -216,6 +295,12 @@ export const ZeroDevSmartWalletProvider = ({
       setKernelClient(null);
       setSmartAccountAddress(null);
       setError(null);
+      setHasInitialized(false);
+      // Clear stored wallet address on logout for clean state
+      localStorage.removeItem('zerodev-selected-wallet');
+      // Clear any old generic merch purchases (legacy cleanup)
+      localStorage.removeItem('merch-purchases');
+      console.log('[ZERODEV] Cleared stored wallet address and legacy data on logout');
     }
   }, [authenticated]);
 

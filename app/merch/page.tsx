@@ -25,17 +25,26 @@ export default function MerchPage() {
 
   const cmtBalance = balances.find(b => b.symbol === 'CMT');
 
-  // Load purchases from localStorage
+  // Load purchases from localStorage (wallet-specific)
   useEffect(() => {
-    const stored = localStorage.getItem('merch-purchases');
+    if (!smartAccountAddress) {
+      setPurchases({});
+      return;
+    }
+    
+    const walletSpecificKey = `merch-purchases-${smartAccountAddress.toLowerCase()}`;
+    const stored = localStorage.getItem(walletSpecificKey);
     if (stored) {
       try {
         setPurchases(JSON.parse(stored));
       } catch (e) {
         console.error('Failed to parse purchases:', e);
+        setPurchases({});
       }
+    } else {
+      setPurchases({});
     }
-  }, []);
+  }, [smartAccountAddress]);
 
   const isPurchased = (itemId: string) => !!purchases[itemId];
 
@@ -97,7 +106,7 @@ export default function MerchPage() {
 
       console.log('[MERCH] ✅ Real CMT transfer completed:', txHash);
 
-      // Save purchase to localStorage with real transaction hash
+      // Save purchase to localStorage with real transaction hash (wallet-specific)
       const newPurchases = {
         ...purchases,
         [item.id]: {
@@ -106,7 +115,13 @@ export default function MerchPage() {
         },
       };
       setPurchases(newPurchases);
-      localStorage.setItem('merch-purchases', JSON.stringify(newPurchases));
+      
+      // Store purchases with wallet-specific key
+      if (smartAccountAddress) {
+        const walletSpecificKey = `merch-purchases-${smartAccountAddress.toLowerCase()}`;
+        localStorage.setItem(walletSpecificKey, JSON.stringify(newPurchases));
+        console.log('[MERCH] Purchase saved for wallet:', smartAccountAddress);
+      }
 
       alert(`✓ Compra exitosa! ${item.price} CMT transferidos.\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`);
       

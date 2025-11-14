@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Send, Copy, Check, Wallet, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Send, Copy, Check, Wallet, RefreshCw, ExternalLink } from 'lucide-react';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
+import { encodeFunctionData, parseUnits, isAddress } from 'viem';
+import { tokens } from '@/config/tokens';
 
 export default function PortfolioPage() {
   const router = useRouter();
-  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
+  const smartAccount = useSmartAccount();
+  const { smartAccountAddress, isSmartAccountReady } = smartAccount;
   const { balances, isLoading } = useTokenBalances(smartAccountAddress ?? undefined);
   const { isAuthenticated } = useAuth();
   const [copied, setCopied] = useState(false);
@@ -34,23 +37,140 @@ export default function PortfolioPage() {
   };
 
   const handleSend = async () => {
-    if (!selectedToken || !sendTo || !sendAmount) return;
+    if (!selectedToken || !sendTo || !sendAmount || !smartAccountAddress) return;
     
+    // Validation checks
+    if (!smartAccount.canSponsorTransaction) {
+      alert('Smart account no está listo para transacciones patrocinadas. Por favor espera...');
+      return;
+    }
+
+    // Validate recipient address
+    if (!isAddress(sendTo)) {
+      alert('Dirección de destino inválida. Por favor verifica la dirección.');
+      return;
+    }
+
+    // Validate amount
+    const amount = parseFloat(sendAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Cantidad inválida. Por favor ingresa un número válido mayor a 0.');
+      return;
+    }
+
+    // Find selected token info
+    const tokenInfo = tokens.find(t => t.symbol === selectedToken);
+    const selectedBalance = balances.find(b => b.symbol === selectedToken);
+    
+    if (!tokenInfo || !selectedBalance) {
+      alert('Token no encontrado. Por favor selecciona un token válido.');
+      return;
+    }
+
+    // Check if user has enough balance
+    const currentBalance = parseFloat(selectedBalance.formattedBalance);
+    if (currentBalance < amount) {
+      alert(`Balance insuficiente. Necesitas ${amount} ${selectedToken} pero solo tienes ${currentBalance.toFixed(4)} ${selectedToken}.`);
+      return;
+    }
+
     setIsSending(true);
     try {
-      // TODO: Implement gasless send via ZeroDev
-      console.log('Sending:', { token: selectedToken, to: sendTo, amount: sendAmount });
+      console.log('[PORTFOLIO] Starting gasless transfer:', {
+        token: selectedToken,
+        amount: amount,
+        from: smartAccountAddress,
+        to: sendTo,
+        tokenAddress: tokenInfo.address,
+      });
+
+      let txHash: string | null = null;
+
+      if (tokenInfo.isNative) {
+        // Handle native CELO transfer
+        const amountInWei = parseUnits(sendAmount, tokenInfo.decimals);
+        
+        console.log('[PORTFOLIO] Executing native CELO transfer via ZeroDev...');
+        
+        txHash = await smartAccount.executeTransaction({
+          to: sendTo as `0x${string}`,
+          data: '0x', // Empty data for native transfer
+          value: amountInWei,
+        });
+      } else {
+        // Handle ERC20 token transfer
+        const amountInWei = parseUnits(sendAmount, tokenInfo.decimals);
+        
+        // Standard ERC20 ABI for transfer function
+        const ERC20_ABI = [
+          {
+            inputs: [
+              { name: 'to', type: 'address' },
+              { name: 'amount', type: 'uint256' }
+            ],
+            name: 'transfer',
+            outputs: [{ name: '', type: 'bool' }],
+            stateMutability: 'nonpayable',
+            type: 'function',
+          },
+        ] as const;
+
+        // Encode the ERC20 transfer function call
+        const transferData = encodeFunctionData({
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [sendTo as `0x${string}`, amountInWei],
+        });
+
+        console.log('[PORTFOLIO] Executing ERC20 transfer via ZeroDev...');
+        console.log('[PORTFOLIO] Transfer data:', transferData);
+        
+        txHash = await smartAccount.executeTransaction({
+          to: tokenInfo.address as `0x${string}`,
+          data: transferData,
+          value: 0n, // No ETH value needed for ERC20 transfer
+        });
+      }
+
+      if (!txHash) {
+        throw new Error('Transaction failed - no hash returned');
+      }
+
+      console.log('[PORTFOLIO] ✅ Gasless transfer completed:', txHash);
+
+      // Show success message with transaction link
+      alert(`✓ Transferencia exitosa! ${amount} ${selectedToken} enviados a ${sendTo.slice(0, 8)}...${sendTo.slice(-6)}\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`);
       
-      // Placeholder for actual send logic
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('Transacción enviada! (Placeholder - implement actual send)');
+      // Reset form
       setSelectedToken(null);
       setSendTo('');
       setSendAmount('');
-    } catch (error) {
-      console.error('Send error:', error);
-      alert('Error al enviar transacción');
+      
+      // Refresh balances after successful transfer
+      setTimeout(() => {
+        window.location.reload(); // Simple way to refresh balances
+      }, 3000);
+
+    } catch (error: any) {
+      console.error('[PORTFOLIO] Transfer error:', error);
+      
+      // More detailed error handling
+      let errorMessage = 'Error desconocido al procesar la transferencia';
+      if (error?.message) {
+        if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Fondos insuficientes para la transacción';
+        } else if (error.message.includes('user rejected')) {
+          errorMessage = 'Transacción cancelada por el usuario';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Error de red. Por favor intenta de nuevo';
+        } else if (error.message.includes('invalid address')) {
+          errorMessage = 'Dirección de destino inválida';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(`Error al procesar la transferencia: ${errorMessage}`);
     } finally {
       setIsSending(false);
     }

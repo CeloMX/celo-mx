@@ -53,7 +53,7 @@ export const ZeroDevSmartWalletProvider = ({
 }) => {
   console.log('[ZERODEV] Provider initialized with project ID:', zeroDevProjectId);
   const { wallets } = useWallets();
-  const { authenticated } = usePrivy();
+  const { authenticated, ready: privyReady } = usePrivy();
   const [kernelClient, setKernelClient] = useState<any>(null);
   const [smartAccountAddress, setSmartAccountAddress] = useState<
     `0x${string}` | null
@@ -61,6 +61,7 @@ export const ZeroDevSmartWalletProvider = ({
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
   
   console.log('[ZERODEV] Using FORCED mainnet chain:', FORCED_CHAIN.name, 'ID:', FORCED_CHAIN.id);
 
@@ -112,8 +113,97 @@ export const ZeroDevSmartWalletProvider = ({
     }
   };
 
+  // Immediate recovery effect - try to restore previous state as soon as possible
+  useEffect(() => {
+    const immediateRecovery = () => {
+      // Try to recover state immediately, even before Privy is fully ready
+      if (hasInitialized || isInitializing || smartAccountAddress) {
+        return;
+      }
+
+      console.log('[ZERODEV] Attempting immediate Smart Account state recovery...');
+      
+      try {
+        const storedWalletAddress = localStorage.getItem('zerodev-selected-wallet');
+        if (storedWalletAddress) {
+          const existingSmartAccount = localStorage.getItem(`zerodev-smart-account-${storedWalletAddress.toLowerCase()}`);
+          if (existingSmartAccount) {
+            console.log('[ZERODEV] ⚡ Immediate recovery successful:', {
+              wallet: storedWalletAddress,
+              smartAccount: existingSmartAccount
+            });
+            
+            // Set the smart account address immediately for UI responsiveness
+            setSmartAccountAddress(existingSmartAccount as `0x${string}`);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('[ZERODEV] Error during immediate recovery:', error);
+      }
+    };
+
+    immediateRecovery();
+  }, []); // Run only once on mount
+
+  // Full recovery effect - wait for Privy and wallets to be ready
+  useEffect(() => {
+    const recoverSmartAccountState = async () => {
+      // Wait for Privy to be ready first
+      if (!privyReady) {
+        console.log('[ZERODEV] Waiting for Privy to be ready...');
+        return;
+      }
+
+      if (!authenticated || !wallets || wallets.length === 0 || hasInitialized || isInitializing) {
+        return;
+      }
+
+      setIsRecovering(true);
+      console.log('[ZERODEV] Attempting full Smart Account state recovery...');
+
+      try {
+        // Check if we have a stored wallet address and smart account
+        const storedWalletAddress = localStorage.getItem('zerodev-selected-wallet');
+        if (storedWalletAddress) {
+          const existingSmartAccount = localStorage.getItem(`zerodev-smart-account-${storedWalletAddress.toLowerCase()}`);
+          if (existingSmartAccount) {
+            console.log('[ZERODEV] Found previous Smart Account state:', {
+              wallet: storedWalletAddress,
+              smartAccount: existingSmartAccount
+            });
+            
+            // Set the smart account address if not already set
+            if (!smartAccountAddress) {
+              setSmartAccountAddress(existingSmartAccount as `0x${string}`);
+            }
+            
+            // Trigger full initialization in the background
+            setTimeout(() => {
+              setIsRecovering(false);
+            }, 500);
+            
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('[ZERODEV] Error during state recovery:', error);
+      } finally {
+        setIsRecovering(false);
+      }
+    };
+
+    recoverSmartAccountState();
+  }, [privyReady, authenticated, wallets, smartAccountAddress]);
+
   useEffect(() => {
     const initializeSmartWallet = async () => {
+      // Wait for Privy to be ready first
+      if (!privyReady) {
+        console.log('[ZERODEV] Waiting for Privy to be ready before initializing...');
+        return;
+      }
+
       if (!authenticated || !wallets || wallets.length === 0) {
         setKernelClient(null);
         setSmartAccountAddress(null);
@@ -128,10 +218,21 @@ export const ZeroDevSmartWalletProvider = ({
         return;
       }
 
-      try {
-        setIsInitializing(true);
-        setError(null);
-        console.log('[ZERODEV] Initializing smart wallet with wallets:', wallets.length);
+      // Wait for recovery to complete
+      if (isRecovering) {
+        console.log('[ZERODEV] Waiting for state recovery to complete...');
+        return;
+      }
+
+      // Retry logic for network failures
+      const maxRetries = 3;
+      let retryCount = 0;
+
+      const attemptInitialization = async (): Promise<void> => {
+        try {
+          setIsInitializing(true);
+          setError(null);
+          console.log('[ZERODEV] Initializing smart wallet with wallets:', wallets.length, `(attempt ${retryCount + 1}/${maxRetries})`);
         
         // DETERMINISTIC WALLET SELECTION WITH PERSISTENCE
         // Check if we have a previously selected wallet address stored
@@ -276,18 +377,43 @@ export const ZeroDevSmartWalletProvider = ({
         
         setSmartAccountAddress(finalSmartAccountAddress as `0x${string}`);
         setHasInitialized(true);
-        console.log('[ZERODEV] 🎉 Smart wallet initialization complete!');
-      } catch (err) {
-        console.error("[ZERODEV] ❌ Error initializing smart wallet:", err);
-        setError(err instanceof Error ? err.message : "Unknown error");
-        setHasInitialized(false);
-      } finally {
-        setIsInitializing(false);
-      }
+          console.log('[ZERODEV] 🎉 Smart wallet initialization complete!');
+        } catch (err) {
+          console.error(`[ZERODEV] ❌ Error initializing smart wallet (attempt ${retryCount + 1}):`, err);
+          
+          retryCount++;
+          
+          // Check if it's a network error that we should retry
+          const isRetryableError = err instanceof Error && (
+            err.message.includes('Failed to fetch') ||
+            err.message.includes('HTTP request failed') ||
+            err.message.includes('network') ||
+            err.message.includes('timeout')
+          );
+          
+          if (retryCount < maxRetries && isRetryableError) {
+            console.log(`[ZERODEV] Retrying initialization in 2 seconds... (${retryCount}/${maxRetries})`);
+            setError(`Connection failed, retrying... (${retryCount}/${maxRetries})`);
+            
+            // Wait 2 seconds before retry
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return attemptInitialization();
+          } else {
+            // Final failure
+            setError(err instanceof Error ? err.message : "Unknown error");
+            setHasInitialized(false);
+            throw err;
+          }
+        } finally {
+          setIsInitializing(false);
+        }
+      };
+
+      await attemptInitialization();
     };
 
     initializeSmartWallet();
-  }, [authenticated, wallets, zeroDevProjectId]);
+  }, [privyReady, authenticated, wallets, zeroDevProjectId]);
 
   // Reset state when user logs out
   useEffect(() => {
@@ -307,12 +433,12 @@ export const ZeroDevSmartWalletProvider = ({
   const contextValue: SmartWalletContextType = {
     kernelClient,
     smartAccountAddress,
-    isInitializing,
-    isCreatingSmartAccount: isInitializing, // Alias for compatibility
-    isSmartAccountReady: !!kernelClient && !!smartAccountAddress && !isInitializing,
-    canSponsorTransaction: !!kernelClient && !!smartAccountAddress && !isInitializing,
+    isInitializing: isInitializing || isRecovering,
+    isCreatingSmartAccount: isInitializing || isRecovering, // Alias for compatibility
+    isSmartAccountReady: !!kernelClient && !!smartAccountAddress && !isInitializing && !isRecovering,
+    canSponsorTransaction: !!kernelClient && !!smartAccountAddress && !isInitializing && !isRecovering,
     error,
-    isLoading: isInitializing, // Alias for compatibility
+    isLoading: isInitializing || isRecovering, // Alias for compatibility
     executeTransaction,
   };
 

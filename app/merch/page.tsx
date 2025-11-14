@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShoppingCart, Wallet, Check, X, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Wallet, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +14,8 @@ export default function MerchPage() {
   const router = useRouter();
   const { ready: privyReady, authenticated: privyAuth } = usePrivy();
   const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
-  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress);
+  // Fix: Convert null to undefined by using || undefined
+  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress || undefined);
   const { isAuthenticated } = useAuth();
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});

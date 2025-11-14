@@ -36,6 +36,13 @@ export default function Header() {
               Academia
               <span className="absolute -bottom-2 left-0 w-full h-[0.5px] bg-celo-muted transition-all duration-400 ease-out group-hover:bottom-0 opacity-0 group-hover:opacity-100"></span>
             </Link>
+               <Link 
+              href="/merch" 
+              className="text-celo-fg font-medium relative group transition-all duration-200"
+            >
+              Merch
+              <span className="absolute -bottom-2 left-0 w-full h-[0.5px] bg-celo-muted transition-all duration-400 ease-out group-hover:bottom-0 opacity-0 group-hover:opacity-100"></span>
+            </Link>
             <Link 
               href="/marketplace" 
               className="text-celo-fg font-medium relative group transition-all duration-200"

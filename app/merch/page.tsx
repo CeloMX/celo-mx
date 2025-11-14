@@ -8,12 +8,15 @@ import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
 import { merchItems, MERCHANT_ADDRESS, MerchItem } from '@/config/merch';
+import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
+import { encodeFunctionData } from 'viem';
 import Image from 'next/image';
 
 export default function MerchPage() {
   const router = useRouter();
   const { ready: privyReady, authenticated: privyAuth } = usePrivy();
-  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
+  const smartAccount = useSmartAccount();
+  const { smartAccountAddress, isSmartAccountReady } = smartAccount;
   // Fix: Convert null to undefined by using || undefined
   const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress || undefined);
   const { isAuthenticated } = useAuth();
@@ -37,40 +40,100 @@ export default function MerchPage() {
   const isPurchased = (itemId: string) => !!purchases[itemId];
 
   const handlePurchase = async (item: MerchItem) => {
-    if (!smartAccountAddress) return;
+    // Validation checks
+    if (!smartAccountAddress) {
+      alert('Smart account no está disponible. Por favor espera a que se inicialice.');
+      return;
+    }
+    
+    if (!smartAccount.canSponsorTransaction) {
+      alert('Smart account no está listo para transacciones patrocinadas. Por favor espera...');
+      return;
+    }
+    
     if (isPurchased(item.id)) return;
+
+    // Check if user has enough CMT balance
+    const cmtBalanceNum = parseFloat(cmtBalance?.formattedBalance || '0');
+    if (cmtBalanceNum < item.price) {
+      alert(`Balance insuficiente. Necesitas ${item.price} CMT pero solo tienes ${cmtBalanceNum.toFixed(4)} CMT.`);
+      return;
+    }
 
     setPurchasingItem(item.id);
     try {
-      // TODO: Implement gasless CMT transfer via ZeroDev
-      console.log('Purchasing:', {
+      console.log('[MERCH] Starting real CMT transfer:', {
         item: item.name,
         price: item.price,
         from: smartAccountAddress,
         to: MERCHANT_ADDRESS,
+        cmtTokenAddress: CMT_TOKEN_CONFIG.address,
       });
 
-      // Placeholder for actual transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Convert CMT amount to wei (18 decimals)
+      const amountInWei = cmtToWei(item.price);
+      console.log('[MERCH] Amount in wei:', amountInWei.toString());
+      
+      // Encode the ERC20 transfer function call
+      const transferData = encodeFunctionData({
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [MERCHANT_ADDRESS as `0x${string}`, amountInWei],
+      });
 
-      // Mock transaction hash (replace with actual tx hash from ZeroDev)
-      const mockTxHash = `0x${Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+      console.log('[MERCH] Executing sponsored CMT transfer via ZeroDev...');
+      console.log('[MERCH] Transfer data:', transferData);
+      
+      // Execute the real CMT transfer using ZeroDev sponsored transaction
+      const txHash = await smartAccount.executeTransaction({
+        to: CMT_TOKEN_CONFIG.address,
+        data: transferData,
+        value: 0n, // No ETH value needed for ERC20 transfer
+      });
 
-      // Save purchase to localStorage
+      if (!txHash) {
+        throw new Error('Transaction failed - no hash returned');
+      }
+
+      console.log('[MERCH] ✅ Real CMT transfer completed:', txHash);
+
+      // Save purchase to localStorage with real transaction hash
       const newPurchases = {
         ...purchases,
         [item.id]: {
-          txHash: mockTxHash,
+          txHash,
           timestamp: Date.now(),
         },
       };
       setPurchases(newPurchases);
       localStorage.setItem('merch-purchases', JSON.stringify(newPurchases));
 
-      alert(`✓ Compra exitosa! Ver transacción: https://celoscan.io/tx/${mockTxHash}`);
-    } catch (error) {
-      console.error('Purchase error:', error);
-      alert('Error al procesar la compra');
+      alert(`✓ Compra exitosa! ${item.price} CMT transferidos.\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`);
+      
+      // Refresh balances after successful purchase
+      // The useTokenBalances hook should automatically refresh, but we can trigger it
+      setTimeout(() => {
+        window.location.reload(); // Simple way to refresh balances
+      }, 3000);
+
+    } catch (error: any) {
+      console.error('[MERCH] Purchase error:', error);
+      
+      // More detailed error handling
+      let errorMessage = 'Error desconocido al procesar la compra';
+      if (error?.message) {
+        if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Fondos insuficientes para la transacción';
+        } else if (error.message.includes('user rejected')) {
+          errorMessage = 'Transacción cancelada por el usuario';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Error de red. Por favor intenta de nuevo';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(`Error al procesar la compra: ${errorMessage}`);
     } finally {
       setPurchasingItem(null);
     }
@@ -110,10 +173,20 @@ export default function MerchPage() {
   if (!isSmartAccountReady || !smartAccountAddress) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-celo-bg">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto px-4">
           <RefreshCw className="w-16 h-16 mx-auto mb-4 text-celo-yellow animate-spin" />
           <h2 className="text-2xl font-bold text-celo-fg mb-2">Preparando Smart Account...</h2>
-          <p className="text-celo-muted">Configurando tu cuenta gasless</p>
+          <p className="text-celo-muted mb-4">Configurando tu cuenta gasless para transacciones sin gas</p>
+          {smartAccount.error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+              <p className="text-red-600 dark:text-red-400 text-sm">
+                Error: {smartAccount.error}
+              </p>
+            </div>
+          )}
+          <p className="text-xs text-celo-muted">
+            Esto puede tomar unos segundos la primera vez...
+          </p>
         </div>
       </div>
     );

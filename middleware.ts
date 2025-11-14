@@ -341,14 +341,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://auth.privy.io https://vercel.live",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    // Allow images from common CDNs and YouTube thumbnails used in course previews
+    "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' https: data: blob:",
-    // Allow on-chain/RPC and auth connections required for web3 + Privy + WalletConnect
-    "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io",
-    // Allow embedded frames for Privy and video providers used in course pages
+    "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://explorer-api.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io",
     "frame-src https://auth.privy.io https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
-    // Allow media streams if used outside iframes
     "media-src 'self' https: data: blob:",
   ].join('; ');
   

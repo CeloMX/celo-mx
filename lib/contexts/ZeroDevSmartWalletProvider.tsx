@@ -414,20 +414,19 @@ export const ZeroDevSmartWalletProvider = ({
     initializeSmartWallet();
   }, [privyReady, authenticated, wallets, zeroDevProjectId]);
 
-  // Reset state when user logs out
   useEffect(() => {
+    if (!privyReady) {
+      return;
+    }
     if (!authenticated) {
       setKernelClient(null);
       setSmartAccountAddress(null);
       setError(null);
       setHasInitialized(false);
-      // Clear stored wallet address on logout for clean state
-      localStorage.removeItem('zerodev-selected-wallet');
-      // Clear any old generic merch purchases (legacy cleanup)
       localStorage.removeItem('merch-purchases');
-      console.log('[ZERODEV] Cleared stored wallet address and legacy data on logout');
+      console.log('[ZERODEV] Cleared legacy data on logout');
     }
-  }, [authenticated]);
+  }, [privyReady, authenticated]);
 
   const contextValue: SmartWalletContextType = {
     kernelClient,

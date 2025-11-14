@@ -238,28 +238,27 @@ export const ZeroDevSmartWalletProvider = ({
         // Check if we have a previously selected wallet address stored
         const storedWalletAddress = localStorage.getItem('zerodev-selected-wallet');
         let walletToUse = null;
-        
+
         if (storedWalletAddress) {
-          // Try to find the previously used wallet first
           walletToUse = wallets.find(wallet => wallet.address.toLowerCase() === storedWalletAddress.toLowerCase());
           console.log('[ZERODEV] Found stored wallet address:', storedWalletAddress, 'Available:', !!walletToUse);
+
+          if (!walletToUse) {
+            console.log('[ZERODEV] Stored wallet not available yet, waiting for wallets to load...');
+            setIsInitializing(false);
+            return;
+          }
         }
-        
+
         if (!walletToUse) {
-          // If no stored wallet or stored wallet not available, use deterministic selection
-          // Sort wallets by a consistent criteria to ensure deterministic selection
           const sortedWallets = [...wallets].sort((a, b) => {
-            // First, prioritize by wallet type (embedded wallets first for consistency)
             if (a.walletClientType === 'privy' && b.walletClientType !== 'privy') return -1;
             if (a.walletClientType !== 'privy' && b.walletClientType === 'privy') return 1;
-            
-            // Then sort by address to ensure consistent ordering
             return a.address.localeCompare(b.address);
           });
-          
-          walletToUse = sortedWallets[0]; // Always use the first wallet after sorting
-          
-          // Store the selected wallet address for future consistency
+
+          walletToUse = sortedWallets[0];
+
           if (walletToUse) {
             localStorage.setItem('zerodev-selected-wallet', walletToUse.address);
             console.log('[ZERODEV] Stored wallet address for future use:', walletToUse.address);

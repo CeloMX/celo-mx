@@ -18,7 +18,7 @@ export default function MerchPage() {
   const smartAccount = useSmartAccount();
   const { smartAccountAddress, isSmartAccountReady } = smartAccount;
   // Fix: Convert null to undefined by using || undefined
-  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress || undefined);
+  const { balances, isLoading: balancesLoading, refetch: refetchBalances } = useTokenBalances(smartAccountAddress || undefined);
   const { isAuthenticated } = useAuth();
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
@@ -126,10 +126,9 @@ export default function MerchPage() {
       alert(`✓ Compra exitosa! ${item.price} CMT transferidos.\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`);
       
       // Refresh balances after successful purchase
-      // The useTokenBalances hook should automatically refresh, but we can trigger it
       setTimeout(() => {
-        window.location.reload(); // Simple way to refresh balances
-      }, 3000);
+        refetchBalances();
+      }, 2000);
 
     } catch (error: any) {
       console.error('[MERCH] Purchase error:', error);

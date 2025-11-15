@@ -15,17 +15,25 @@ export const merchItems: MerchItem[] = [
     id: 'celo-shirt',
     name: 'Celo MX Shirt',
     description: 'Official Celo Mexico community shirt. High quality cotton with Celo logo.',
-    price: 2, // 2 CMT
-    image: 'https://via.placeholder.com/400x400/FCFF52/000000?text=Celo+Shirt',
+    price: 3, // 3 CMT
+    image: 'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_shirt.jpg',
     category: 'clothing',
     sizes: ['S', 'M', 'L', 'XL'],
   },
   {
-    id: 'celo-hat',
-    name: 'Celo MX Hat',
-    description: 'Stylish Celo Mexico cap. Adjustable strap, one size fits all.',
+    id: 'celo-beanie',
+    name: 'Celo MX Beanie',
+    description: 'Cozy Celo Mexico beanie. Keep warm while showing your Celo pride.',
     price: 2, // 2 CMT
-    image: 'https://via.placeholder.com/400x400/FCFF52/000000?text=Celo+Hat',
+    image: 'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_beanie.jpg',
+    category: 'accessories',
+  },
+  {
+    id: 'celo-sticker',
+    name: 'Celo MX Sticker',
+    description: 'Premium Celo Mexico sticker. Perfect for laptops, water bottles, and more.',
+    price: 1, // 1 CMT
+    image: 'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_sticker.jpg',
     category: 'accessories',
   },
 ];

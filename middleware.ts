@@ -336,14 +336,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   
-  // CSP header (restrictive for security)
+  // CSP header (restrictive for security) - UPDATED FOR ZERODEV AND WALLETCONNECT
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://auth.privy.io https://vercel.live",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' https: data: blob:",
-    "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://explorer-api.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io",
+    // Updated connect-src to include ZeroDev and WalletConnect services
+    "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://explorer-api.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io https://rpc.zerodev.app https://pulse.walletconnect.org https://api.web3modal.org https://api.web3modal.org/projects/v1/origins https://api.web3modal.org/getAnalyticsConfig",
     "frame-src https://auth.privy.io https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
     "media-src 'self' https: data: blob:",
   ].join('; ');

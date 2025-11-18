@@ -40,6 +40,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'tgjqcddmqtaceidmafyn.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
   },
   // Simplified webpack config for Next.js 15
@@ -74,6 +80,5 @@ const nextConfig = {
 };
 
 export default nextConfig;
-
 
 

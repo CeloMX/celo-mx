@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingCart, Wallet, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
@@ -24,35 +24,65 @@ type MerchItem = {
   isActive: boolean;
 }
 
-export default function MerchPage() {
+function MerchPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { ready: privyReady, authenticated: privyAuth } = usePrivy();
   const smartAccount = useSmartAccount();
   const { smartAccountAddress, isSmartAccountReady } = smartAccount;
   // Fix: Convert null to undefined by using || undefined
   const { balances, isLoading: balancesLoading, refetch: refetchBalances } = useTokenBalances(smartAccountAddress || undefined);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, wallet } = useAuth() as any;
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
   const [items, setItems] = useState<MerchItem[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
+  const userIdParam = (searchParams.get('userId') || '').trim() || null;
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
 
   const cmtBalance = balances.find(b => b.symbol === 'CMT');
 
-  // Clear legacy localStorage/cookie purchases and load from server
+  // Load purchases from server (authenticated) without relying on query/userId
   useEffect(() => {
-    const cleanupAndLoad = async () => {
-      if (smartAccountAddress) {
-        const walletSpecificKey = `merch-purchases-${smartAccountAddress.toLowerCase()}`;
-        try { localStorage.removeItem(walletSpecificKey); } catch {}
-        try { document.cookie = 'merch-purchases=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
+    const resolveAndLoad = async () => {
+      if (!smartAccountAddress && !userIdParam && !wallet?.address) {
+        return;
       }
       try {
-        const res = await fetch('/api/merch/purchases');
+        const idParams = new URLSearchParams();
+        if (smartAccountAddress) idParams.set('smartAccount', smartAccountAddress);
+        const walletAddr = (wallet?.address as string | undefined)?.toLowerCase();
+        if (walletAddr) idParams.set('wallet', walletAddr);
+        const idRes = await fetch(`/api/merch/user-id?${idParams.toString()}`, { cache: 'no-store' });
+        if (idRes.ok) {
+          const idJson = await idRes.json();
+          setResolvedUserId(idJson.userId || null);
+        } else {
+          setResolvedUserId(null);
+        }
+      } catch {
+        setResolvedUserId(null);
+      }
+      try {
+        const pParams = new URLSearchParams();
+        const walletAddr = (wallet?.address as string | undefined)?.toLowerCase();
+        const effectiveUserId = userIdParam || resolvedUserId || '';
+        if (effectiveUserId) {
+          pParams.set('userId', effectiveUserId);
+        } else {
+          if (smartAccountAddress) pParams.set('smartAccount', smartAccountAddress);
+          if (walletAddr) pParams.set('wallet', walletAddr);
+        }
+        const res = await fetch(`/api/merch/purchases/by-wallet?${pParams.toString()}`, { cache: 'no-store' });
         if (res.ok) {
           const json = await res.json();
           const map: Record<string, { txHash: string; timestamp: number }> = {};
-          (json.purchases || []).forEach((p: any) => { map[p.itemid] = { txHash: p.txhash, timestamp: Date.parse(p.createdat) || Date.now() }; });
+          (json.purchases || []).forEach((p: any) => {
+            const itemId = p.itemid ?? p.id;
+            const tx = p.txhash ?? p.txHash;
+            const ts = p.createdat ?? p.purchasedAt;
+            if (itemId && tx) map[itemId] = { txHash: tx, timestamp: Date.parse(ts) || Date.now() };
+          });
           setPurchases(map);
         } else {
           setPurchases({});
@@ -61,8 +91,8 @@ export default function MerchPage() {
         setPurchases({});
       }
     };
-    if (isAuthenticated) cleanupAndLoad();
-  }, [isAuthenticated, smartAccountAddress]);
+    resolveAndLoad();
+  }, [smartAccountAddress, userIdParam, wallet?.address]);
 
   const isPurchased = (itemId: string) => !!purchases[itemId];
 
@@ -145,10 +175,11 @@ export default function MerchPage() {
       console.log('[MERCH] ✅ Real CMT transfer completed:', txHash);
 
       const selectedSize = selectedSizes[item.id];
+      const userIdForPurchase = userIdParam || resolvedUserId || null;
       const purchaseRes = await fetch('/api/merch/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: item.id, txHash, amount: item.price, selectedSize, smartAccount: smartAccountAddress })
+        body: JSON.stringify({ itemId: item.id, txHash, amount: item.price, selectedSize, smartAccount: smartAccountAddress, userId: userIdForPurchase || undefined })
       });
       if (!purchaseRes.ok) {
         const err = await purchaseRes.json().catch(() => ({ error: 'Compra no registrada' }));
@@ -156,9 +187,13 @@ export default function MerchPage() {
       }
       const purchaseJson = await purchaseRes.json();
       const updatedItem = purchaseJson.item as { id: string; stock: number } | undefined;
+      const purchaseUserId = purchaseJson.userId as string | undefined;
 
       if (updatedItem && typeof updatedItem.stock === 'number') {
         setItems((prev) => prev.map((it) => it.id === updatedItem.id ? { ...it, stock: updatedItem.stock } : it));
+      }
+      if (purchaseUserId) {
+        setResolvedUserId(purchaseUserId);
       }
 
       setPurchases((prev) => ({ ...prev, [item.id]: { txHash, timestamp: Date.now() } }));
@@ -168,9 +203,18 @@ export default function MerchPage() {
       setTimeout(() => {
         refetchBalances();
       }, 2000);
+      const params = new URLSearchParams();
+      const walletAddr = (wallet?.address as string | undefined)?.toLowerCase();
+      const effectiveUserId2 = userIdParam || resolvedUserId || '';
+      if (effectiveUserId2) {
+        params.set('userId', effectiveUserId2);
+      } else {
+        if (smartAccountAddress) params.set('smartAccount', smartAccountAddress);
+        if (walletAddr) params.set('wallet', walletAddr);
+      }
       const [itemsRes, purchasesRes] = await Promise.all([
         fetch(`/api/merch/items?t=${Date.now()}`, { cache: 'no-store' }),
-        fetch('/api/merch/purchases', { cache: 'no-store' })
+        fetch(`/api/merch/purchases/by-wallet?${params.toString()}`, { cache: 'no-store' })
       ]);
       if (itemsRes.ok) {
         const json = await itemsRes.json();
@@ -179,7 +223,12 @@ export default function MerchPage() {
       if (purchasesRes.ok) {
         const pj = await purchasesRes.json();
         const map: Record<string, { txHash: string; timestamp: number }> = {};
-        (pj.purchases || []).forEach((p: any) => { map[p.itemid] = { txHash: p.txhash, timestamp: Date.parse(p.createdat) || Date.now() }; });
+        (pj.purchases || []).forEach((p: any) => {
+          const itemId = p.itemid ?? p.id;
+          const tx = p.txhash ?? p.txHash;
+          const ts = p.createdat ?? p.purchasedAt;
+          if (itemId && tx) map[itemId] = { txHash: tx, timestamp: Date.parse(ts) || Date.now() };
+        });
         setPurchases(map);
       }
 
@@ -274,6 +323,12 @@ export default function MerchPage() {
             <h1 className="text-3xl font-bold text-celo-fg">Celo MX Merch</h1>
             <p className="text-celo-muted mt-1">Compra con CMT · Transacciones sin gas</p>
           </div>
+          <button
+            onClick={() => router.push('/merch/purchases')}
+            className="px-4 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+          >
+            Mis Compras
+          </button>
         </div>
 
         {/* Balance Display */}
@@ -367,5 +422,13 @@ export default function MerchPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function MerchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-celo-bg"><div className="text-center"><RefreshCw className="w-16 h-16 mx-auto mb-4 text-celo-yellow animate-spin" /><h2 className="text-2xl font-bold text-celo-fg mb-2">Cargando...</h2><p className="text-celo-muted">Iniciando aplicación</p></div></div>}>
+      <MerchPageInner />
+    </Suspense>
   );
 }

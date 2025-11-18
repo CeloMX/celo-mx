@@ -7,10 +7,22 @@ import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
-import { merchItems, MERCHANT_ADDRESS, MerchItem } from '@/config/merch';
+import { MERCHANT_ADDRESS } from '@/config/merch';
 import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
 import { encodeFunctionData } from 'viem';
 import Image from 'next/image';
+
+type MerchItem = {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image: string;
+  category: 'clothing' | 'accessories';
+  sizes?: string[];
+  stock: number;
+  isActive: boolean;
+}
 
 export default function MerchPage() {
   const router = useRouter();
@@ -22,31 +34,46 @@ export default function MerchPage() {
   const { isAuthenticated } = useAuth();
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
+  const [items, setItems] = useState<MerchItem[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
 
   const cmtBalance = balances.find(b => b.symbol === 'CMT');
 
-  // Load purchases from localStorage (wallet-specific)
+  // Clear legacy localStorage/cookie purchases and load from server
   useEffect(() => {
-    if (!smartAccountAddress) {
-      setPurchases({});
-      return;
-    }
-    
-    const walletSpecificKey = `merch-purchases-${smartAccountAddress.toLowerCase()}`;
-    const stored = localStorage.getItem(walletSpecificKey);
-    if (stored) {
+    const cleanupAndLoad = async () => {
+      if (smartAccountAddress) {
+        const walletSpecificKey = `merch-purchases-${smartAccountAddress.toLowerCase()}`;
+        try { localStorage.removeItem(walletSpecificKey); } catch {}
+        try { document.cookie = 'merch-purchases=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
+      }
       try {
-        setPurchases(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse purchases:', e);
+        const res = await fetch('/api/merch/purchases');
+        if (res.ok) {
+          const json = await res.json();
+          const map: Record<string, { txHash: string; timestamp: number }> = {};
+          (json.purchases || []).forEach((p: any) => { map[p.itemid] = { txHash: p.txhash, timestamp: Date.parse(p.createdat) || Date.now() }; });
+          setPurchases(map);
+        } else {
+          setPurchases({});
+        }
+      } catch {
         setPurchases({});
       }
-    } else {
-      setPurchases({});
-    }
-  }, [smartAccountAddress]);
+    };
+    if (isAuthenticated) cleanupAndLoad();
+  }, [isAuthenticated, smartAccountAddress]);
 
   const isPurchased = (itemId: string) => !!purchases[itemId];
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch(`/api/merch/items?t=${Date.now()}`, { cache: 'no-store' });
+      const json = await res.json();
+      setItems(json.items || []);
+    };
+    load();
+  }, []);
 
   const handlePurchase = async (item: MerchItem) => {
     // Validation checks
@@ -61,6 +88,17 @@ export default function MerchPage() {
     }
     
     if (isPurchased(item.id)) return;
+    if (item.sizes && item.sizes.length) {
+      const chosen = selectedSizes[item.id];
+      if (!chosen) {
+        alert('Selecciona una talla antes de comprar');
+        return;
+      }
+    }
+    if (item.stock <= 0) {
+      alert('Producto agotado');
+      return;
+    }
 
     // Check if user has enough CMT balance
     const cmtBalanceNum = parseFloat(cmtBalance?.formattedBalance || '0');
@@ -106,29 +144,44 @@ export default function MerchPage() {
 
       console.log('[MERCH] ✅ Real CMT transfer completed:', txHash);
 
-      // Save purchase to localStorage with real transaction hash (wallet-specific)
-      const newPurchases = {
-        ...purchases,
-        [item.id]: {
-          txHash,
-          timestamp: Date.now(),
-        },
-      };
-      setPurchases(newPurchases);
-      
-      // Store purchases with wallet-specific key
-      if (smartAccountAddress) {
-        const walletSpecificKey = `merch-purchases-${smartAccountAddress.toLowerCase()}`;
-        localStorage.setItem(walletSpecificKey, JSON.stringify(newPurchases));
-        console.log('[MERCH] Purchase saved for wallet:', smartAccountAddress);
+      const selectedSize = selectedSizes[item.id];
+      const purchaseRes = await fetch('/api/merch/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: item.id, txHash, amount: item.price, selectedSize, smartAccount: smartAccountAddress })
+      });
+      if (!purchaseRes.ok) {
+        const err = await purchaseRes.json().catch(() => ({ error: 'Compra no registrada' }));
+        throw new Error(err?.error || 'Compra no registrada');
+      }
+      const purchaseJson = await purchaseRes.json();
+      const updatedItem = purchaseJson.item as { id: string; stock: number } | undefined;
+
+      if (updatedItem && typeof updatedItem.stock === 'number') {
+        setItems((prev) => prev.map((it) => it.id === updatedItem.id ? { ...it, stock: updatedItem.stock } : it));
       }
 
+      setPurchases((prev) => ({ ...prev, [item.id]: { txHash, timestamp: Date.now() } }));
       alert(`✓ Compra exitosa! ${item.price} CMT transferidos.\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`);
       
       // Refresh balances after successful purchase
       setTimeout(() => {
         refetchBalances();
       }, 2000);
+      const [itemsRes, purchasesRes] = await Promise.all([
+        fetch(`/api/merch/items?t=${Date.now()}`, { cache: 'no-store' }),
+        fetch('/api/merch/purchases', { cache: 'no-store' })
+      ]);
+      if (itemsRes.ok) {
+        const json = await itemsRes.json();
+        setItems(json.items || []);
+      }
+      if (purchasesRes.ok) {
+        const pj = await purchasesRes.json();
+        const map: Record<string, { txHash: string; timestamp: number }> = {};
+        (pj.purchases || []).forEach((p: any) => { map[p.itemid] = { txHash: p.txhash, timestamp: Date.parse(p.createdat) || Date.now() }; });
+        setPurchases(map);
+      }
 
     } catch (error: any) {
       console.error('[MERCH] Purchase error:', error);
@@ -240,7 +293,7 @@ export default function MerchPage() {
 
         {/* Merch Grid */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {merchItems.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className="bg-white dark:bg-black/50 border border-celo-border rounded-2xl overflow-hidden hover:border-celo-yellow transition relative"
@@ -250,6 +303,11 @@ export default function MerchPage() {
                   ✓ Comprado
                 </div>
               )}
+              {item.stock <= 0 && (
+                <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Agotado
+                </div>
+              )}
               <div className="aspect-square bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center relative">
                 <img
                   src={item.image}
@@ -257,13 +315,13 @@ export default function MerchPage() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-celo-fg mb-2">{item.name}</h3>
-                <p className="text-celo-muted text-sm mb-4">{item.description}</p>
-                <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold text-celo-fg">
-                    {item.price} <span className="text-lg text-celo-yellow">CMT</span>
-                  </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-celo-fg mb-2">{item.name}</h3>
+                  <p className="text-celo-muted text-sm mb-4">{item.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-celo-fg">
+                      {item.price} <span className="text-lg text-celo-yellow">CMT</span>
+                    </div>
                   {isPurchased(item.id) ? (
                     <a
                       href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
@@ -276,15 +334,34 @@ export default function MerchPage() {
                   ) : (
                     <button
                       onClick={() => handlePurchase(item)}
-                      disabled={purchasingItem === item.id}
+                      disabled={purchasingItem === item.id || item.stock <= 0}
                       className="px-6 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
                     </button>
                   )}
+                  </div>
+                  <div className="mt-2 text-sm">
+                    <span className={item.stock > 0 ? 'text-celo-muted' : 'text-red-500'}>
+                      {item.stock > 0 ? `Quedan ${item.stock}` : 'Sin stock'}
+                    </span>
+                  </div>
+                  {item.sizes && item.sizes.length ? (
+                    <div className="mt-4">
+                      <select
+                        value={selectedSizes[item.id] || ''}
+                        onChange={(e) => setSelectedSizes((s) => ({ ...s, [item.id]: e.target.value }))}
+                        className="w-full px-3 py-2 border border-celo-border rounded-xl bg-transparent"
+                      >
+                        <option value="">Selecciona talla</option>
+                        {item.sizes.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
                 </div>
               </div>
-            </div>
           ))}
         </div>
 

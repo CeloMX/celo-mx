@@ -41,18 +41,18 @@ export default function AssetGrid({ assets, className = '' }: AssetGridProps) {
                 {/* Asset Image */}
                 <div className="aspect-square celo-border border-b bg-gradient-to-br from-celo-yellow/20 to-celo-lime/20 flex items-center justify-center relative overflow-hidden">
                   <div className="text-center p-6">
-                    <div className="w-16 h-16 mx-auto mb-3 celo-border border-2 rounded-full bg-celo-yellow/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <div className="w-16 h-16 mx-auto mb-3 celo-border border-2 rounded-full bg-celoLegacy-yellow/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
                       <ImageIcon className="w-8 h-8 celo-heading" />
                     </div>
                     <p className="text-xs celo-text opacity-70">NFT Preview</p>
                   </div>
                   
                   {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-celo-yellow/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-celoLegacy-yellow/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                     <Button
                       onClick={() => handleBuyAsset(asset)}
                       size="sm"
-                      className="bg-celo-yellow hover:bg-celo-yellowAlt text-celo-black font-semibold shadow-lg"
+                      className="bg-celoLegacy-yellow hover:bg-celoLegacy-yellowAlt text-celo-black font-semibold shadow-lg"
                       aria-label={`Comprar ${asset.name}`}
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
@@ -74,7 +74,7 @@ export default function AssetGrid({ assets, className = '' }: AssetGridProps) {
 
                   <Button
                     onClick={() => handleBuyAsset(asset)}
-                    className="w-full bg-celo-yellow hover:bg-celo-yellowAlt text-celo-black font-semibold transition-all duration-200"
+                    className="w-full bg-celoLegacy-yellow hover:bg-celoLegacy-yellowAlt text-celo-black font-semibold transition-all duration-200"
                     aria-label={`Comprar ${asset.name}`}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
@@ -88,7 +88,7 @@ export default function AssetGrid({ assets, className = '' }: AssetGridProps) {
 
         {assets.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 celo-border border-2 rounded-full bg-celo-yellow/30 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 celo-border border-2 rounded-full bg-celoLegacy-yellow/30 flex items-center justify-center">
               <ImageIcon className="w-8 h-8 celo-heading" />
             </div>
             <h3 className="text-lg font-display celo-heading mb-2">No hay assets disponibles</h3>

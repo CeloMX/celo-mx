@@ -15,7 +15,7 @@ export default function ShowcasePage() {
         <section className="text-center mb-12">
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <div className="absolute inset-0 bg-celo-yellow/20 dark:bg-celo-yellow/10 rounded-full blur-xl" />
+              <div className="absolute inset-0 bg-celoLegacy-yellow/20 dark:bg-celoLegacy-yellow/10 rounded-full blur-xl" />
               <div className="relative bg-celo-bg border-2 border-celo-border rounded-full px-6 py-2">
                 <span className="text-celo-yellow font-bold text-sm">Proyectos impulsados por Celo México</span>
               </div>
@@ -32,7 +32,7 @@ export default function ShowcasePage() {
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Account Abstraction</span>
-            <span className="text-xs px-3 py-1 rounded-full bg-celo-yellow/15 text-celo-yellow border border-celo-yellow/30">Gasless</span>
+            <span className="text-xs px-3 py-1 rounded-full bg-celoLegacy-yellow/15 text-celo-yellow border border-celo-yellow/30">Gasless</span>
             <span className="text-xs px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">Onboarding</span>
             <span className="text-xs px-3 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">Pagos cUSD</span>
           </div>
@@ -89,7 +89,7 @@ export default function ShowcasePage() {
                       {p.metadata?.chain && <span className="mr-3">Chain: {p.metadata.chain}</span>}
                       {p.metadata?.category && <span>Categoria: {p.metadata.category}</span>}
                     </div>
-<a href={p.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium px-3 py-2 rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black dark:hover:bg-celo-yellow/90">
+<a href={p.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium px-3 py-2 rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celoLegacy-yellow dark:text-black dark:hover:bg-celoLegacy-yellow/90">
                       Visitar
                     </a>
                   </div>
@@ -103,7 +103,7 @@ export default function ShowcasePage() {
         <section className="bg-celo-bg border border-celo-border rounded-2xl p-6 md:p-8 text-center">
           <h3 className="text-2xl font-display font-bold text-celo-fg">¿Quieres lanzar sobre Celo?</h3>
           <p className="text-celo-muted mt-2 max-w-2xl mx-auto">Integramos AA, gasless, pagos y UX lista para producción. Escríbenos y arrancamos.</p>
-<a href="https://t.me/celomexico" target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-sm font-medium px-5 py-2 rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black dark:hover:bg-celo-yellow/90">Hablar con el equipo</a>
+<a href="https://t.me/celomexico" target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-sm font-medium px-5 py-2 rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celoLegacy-yellow dark:text-black dark:hover:bg-celoLegacy-yellow/90">Hablar con el equipo</a>
         </section>
       </div>
     </div>

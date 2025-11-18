@@ -63,7 +63,7 @@ function RegisterSmartAccountButton({ onDone }: { onDone?: () => void }) {
   return (
     <button
       onClick={register}
-      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black dark:hover:bg-celo-yellow/90 disabled:opacity-50"
+      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celoLegacy-yellow dark:text-black dark:hover:bg-celoLegacy-yellow/90 disabled:opacity-50"
     >
       <Wallet className="w-4 h-4" />
       <span>

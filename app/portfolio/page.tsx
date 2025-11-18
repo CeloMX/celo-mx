@@ -185,7 +185,7 @@ export default function PortfolioPage() {
           <p className="text-celo-muted mb-6">Necesitas conectar tu wallet para ver tu portafolio</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            className="px-6 py-3 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
           >
             Ir al Inicio
           </button>
@@ -229,7 +229,7 @@ export default function PortfolioPage() {
             </div>
             <button
               onClick={copyAddress}
-              className="p-3 bg-celo-yellow/20 hover:bg-celo-yellow/30 rounded-xl transition"
+              className="p-3 bg-celoLegacy-yellow/20 hover:bg-celoLegacy-yellow/30 rounded-xl transition"
             >
               {copied ? (
                 <Check className="w-5 h-5 text-green-500" />
@@ -258,13 +258,13 @@ export default function PortfolioPage() {
                   key={token.symbol}
                   className={`flex items-center justify-between p-4 rounded-xl border transition cursor-pointer ${
                     selectedToken === token.symbol
-                      ? 'border-celo-yellow bg-celo-yellow/10'
+                      ? 'border-celo-yellow bg-celoLegacy-yellow/10'
                       : 'border-celo-border hover:border-celo-yellow/50'
                   }`}
                   onClick={() => setSelectedToken(token.symbol)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-celo-yellow/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-celoLegacy-yellow/20 flex items-center justify-center">
                       <span className="text-xl font-bold text-celo-fg">{token.symbol.slice(0, 1)}</span>
                     </div>
                     <div>
@@ -341,7 +341,7 @@ export default function PortfolioPage() {
                 <button
                   onClick={handleSend}
                   disabled={!sendTo || !sendAmount || isSending}
-                  className="flex-1 px-6 py-3 bg-celo-yellow text-black rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-celoLegacy-yellow text-black rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSending ? 'Enviando...' : 'Enviar'}
                 </button>

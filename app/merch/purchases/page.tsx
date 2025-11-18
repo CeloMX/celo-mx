@@ -95,7 +95,7 @@ export default function PurchasesPage() {
                     href={`https://celoscan.io/tx/${item.txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
                   >
                     Ver TX <ExternalLink className="w-4 h-4" />
                   </a>

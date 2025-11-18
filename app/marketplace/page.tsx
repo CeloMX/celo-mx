@@ -66,7 +66,7 @@ export default function MarketplacePage() {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 celo-border border rounded-full bg-celo-yellow/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 celo-border border rounded-full bg-celoLegacy-yellow/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold celo-heading">1</span>
                   </div>
                   <div>
@@ -77,7 +77,7 @@ export default function MarketplacePage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 celo-border border rounded-full bg-celo-yellow/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 celo-border border rounded-full bg-celoLegacy-yellow/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold celo-heading">2</span>
                   </div>
                   <div>
@@ -88,7 +88,7 @@ export default function MarketplacePage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 celo-border border rounded-full bg-celo-yellow/20 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 celo-border border rounded-full bg-celoLegacy-yellow/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold celo-heading">3</span>
                   </div>
                   <div>
@@ -117,7 +117,7 @@ export default function MarketplacePage() {
             <Button
               onClick={scrollToUpcoming}
               variant="outline"
-              className="celo-border celo-text hover:bg-celo-yellow/10"
+              className="celo-border celo-text hover:bg-celoLegacy-yellow/10"
               aria-label="Ver colecciones próximas"
             >
               Próximamente
@@ -144,7 +144,7 @@ export default function MarketplacePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={scrollToAssets}
-              className="bg-celo-yellow hover:bg-celo-yellowAlt text-celo-black font-semibold px-8 py-3 rounded-xl"
+              className="bg-celoLegacy-yellow hover:bg-celoLegacy-yellowAlt text-celo-black font-semibold px-8 py-3 rounded-xl"
             >
               <ShoppingBag className="w-4 h-4 mr-2" />
               Explorar NFTs
@@ -152,7 +152,7 @@ export default function MarketplacePage() {
             <Button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               variant="outline"
-              className="celo-border celo-text hover:bg-celo-yellow/10 px-8 py-3 rounded-xl"
+              className="celo-border celo-text hover:bg-celoLegacy-yellow/10 px-8 py-3 rounded-xl"
             >
               Volver arriba
             </Button>

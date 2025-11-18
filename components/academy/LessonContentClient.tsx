@@ -48,7 +48,7 @@ export function LessonContentClient({
         {/* Lesson Header */}
         <div className="border-b border-white/10 bg-black/30 px-6 py-4">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-celo-yellow" />
+            <div className="w-2 h-2 rounded-full bg-celoLegacy-yellow" />
             <span className="font-gt italic text-sm text-celo-yellow">
               Módulo {currentModule.index}
             </span>
@@ -67,7 +67,7 @@ export function LessonContentClient({
             {requiresWallet ? (
               <div className="rounded-2xl border border-white/10 bg-black/30 p-8">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-celo-yellow/20 flex items-center justify-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-celoLegacy-yellow/20 flex items-center justify-center">
                     <svg className="w-8 h-8 text-celo-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -80,7 +80,7 @@ export function LessonContentClient({
                   </p>
                   <button 
                     onClick={login}
-                    className="inline-flex items-center px-6 py-3 rounded-xl border border-celo-yellow/30 bg-celo-yellow/10 text-celo-yellow hover:bg-celo-yellow/20 transition-colors"
+                    className="inline-flex items-center px-6 py-3 rounded-xl border border-celo-yellow/30 bg-celoLegacy-yellow/10 text-celo-yellow hover:bg-celoLegacy-yellow/20 transition-colors"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

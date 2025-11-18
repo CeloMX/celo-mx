@@ -179,7 +179,7 @@ export function CodeBlock({ inline, className, children, ...props }: ComponentPr
       </button>
 
       {/* Language label */}
-      <div className="absolute top-2 left-2 px-2 py-1 rounded bg-celo-yellow/20 text-celo-yellow text-xs font-mono">
+      <div className="absolute top-2 left-2 px-2 py-1 rounded bg-celoLegacy-yellow/20 text-celo-yellow text-xs font-mono">
         {language}
       </div>
 
@@ -487,7 +487,7 @@ export function ReadingProgress() {
   return (
     <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50">
       <div
-        className="h-full bg-celo-yellow transition-all duration-150"
+        className="h-full bg-celoLegacy-yellow transition-all duration-150"
         style={{ width: `${progress}%` }}
       />
     </div>

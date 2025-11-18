@@ -22,7 +22,7 @@ export default function BuildathonPage() {
               <p className="mt-4 text-celo-muted max-w-2xl text-lg leading-relaxed">
                 Construye el futuro de Web3 en México. Únete a developers, diseñadores y emprendedores para crear soluciones con impacto real en comunidades de México y LATAM.
               </p>
-              <div className="h-1 w-20 bg-celo-yellow rounded-full mt-6"></div>
+              <div className="h-1 w-20 bg-celoLegacy-yellow rounded-full mt-6"></div>
               
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <a 

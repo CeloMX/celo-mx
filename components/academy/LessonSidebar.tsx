@@ -28,7 +28,7 @@ export default function LessonSidebar({ course, current, className = '' }: Lesso
             {/* Module Header */}
             <div className="flex items-center space-x-2">
               <div className={`w-2 h-2 rounded-full ${
-                isModuleActive(module.index) ? 'bg-celo-yellow' : 'bg-white/30'
+                isModuleActive(module.index) ? 'bg-celoLegacy-yellow' : 'bg-white/30'
               }`} />
               <h3 className="font-gt italic text-sm text-celo-yellow">
                 Módulo {module.index}
@@ -58,13 +58,13 @@ export default function LessonSidebar({ course, current, className = '' }: Lesso
                     href={href}
                     className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
                       active
-                        ? 'bg-celo-yellow/20 text-celo-yellow border border-celo-yellow/30'
+                        ? 'bg-celoLegacy-yellow/20 text-celo-yellow border border-celo-yellow/30'
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center space-x-2">
                       <div className={`w-1.5 h-1.5 rounded-full ${
-                        active ? 'bg-celo-yellow' : 'bg-white/40'
+                        active ? 'bg-celoLegacy-yellow' : 'bg-white/40'
                       }`} />
                       <span className="font-inter">
                         {lesson.title}
@@ -82,7 +82,7 @@ export default function LessonSidebar({ course, current, className = '' }: Lesso
       <div className="mt-8 pt-6 border-t border-white/10">
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-celo-yellow" />
+            <div className="w-2 h-2 rounded-full bg-celoLegacy-yellow" />
             <span className="font-gt italic text-sm text-celo-yellow">
               Curso
             </span>

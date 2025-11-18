@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
 import { MERCHANT_ADDRESS } from '@/config/merch';
 import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
+import { CMT_FAUCET_ABI, getCmtFaucetAddress } from '@/lib/contracts/cmtFaucet';
 import { encodeFunctionData } from 'viem';
 import Image from 'next/image';
 
@@ -277,7 +278,7 @@ function MerchPageInner() {
           <p className="text-celo-muted mb-6">Necesitas conectar tu wallet para comprar merch</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            className="px-6 py-3 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
           >
             Ir al Inicio
           </button>
@@ -325,7 +326,7 @@ function MerchPageInner() {
           </div>
           <button
             onClick={() => router.push('/merch/purchases')}
-            className="px-4 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
           >
             Mis Compras
           </button>
@@ -342,6 +343,29 @@ function MerchPageInner() {
                 </p>
               </div>
               <ShoppingCart className="w-8 h-8 text-celo-yellow" />
+            </div>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const faucetAddr = getCmtFaucetAddress(42220);
+                    if (!faucetAddr) {
+                      alert('Faucet no está configurado');
+                      return;
+                    }
+                    const data = encodeFunctionData({ abi: CMT_FAUCET_ABI as any, functionName: 'claim', args: [] });
+                    const txHash = await smartAccount.executeTransaction({ to: faucetAddr, data, value: 0n });
+                    if (!txHash) throw new Error('Faucet claim fallo');
+                    alert(`✓ Faucet solicitado. TX: ${txHash}`);
+                    setTimeout(() => { refetchBalances(); }, 2000);
+                  } catch (e: any) {
+                    alert(`Error faucet: ${e?.message || 'desconocido'}`);
+                  }
+                }}
+                className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+              >
+                Obtener CMT del Faucet
+              </button>
             </div>
           </div>
         )}
@@ -390,7 +414,7 @@ function MerchPageInner() {
                     <button
                       onClick={() => handlePurchase(item)}
                       disabled={purchasingItem === item.id || item.stock <= 0}
-                      className="px-6 py-2 bg-celo-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
                     </button>

@@ -146,7 +146,7 @@ export default function BuySheet({ open, onOpenChange, asset }: BuySheetProps) {
               <Button
                 onClick={handleConfirmPurchase}
                 disabled={loading}
-                className="w-full bg-celo-yellow hover:bg-celo-yellowAlt text-celo-black font-semibold py-3 rounded-xl transition-all duration-200"
+                className="w-full bg-celoLegacy-yellow hover:bg-celoLegacy-yellowAlt text-celo-black font-semibold py-3 rounded-xl transition-all duration-200"
                 aria-label="Confirmar compra"
               >
                 {loading ? (

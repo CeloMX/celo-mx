@@ -46,7 +46,7 @@ export function CodeBlock({ inline, className, children, ...props }: CodeBlockPr
       </button>
 
       {/* Language label */}
-      <div className="absolute top-2 left-2 px-2 py-1 rounded bg-celo-yellow/20 text-celo-yellow text-xs font-mono z-10">
+      <div className="absolute top-2 left-2 px-2 py-1 rounded bg-celoLegacy-yellow/20 text-celo-yellow text-xs font-mono z-10">
         {language}
       </div>
 

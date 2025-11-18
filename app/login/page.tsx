@@ -107,7 +107,7 @@ function LoginContent() {
           {/* Login Button */}
           <button
             onClick={login}
-            className="w-full group relative overflow-hidden flex items-center justify-center gap-3 px-6 py-4 bg-celo-yellow hover:bg-yellow-400 text-black rounded-2xl font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            className="w-full group relative overflow-hidden flex items-center justify-center gap-3 px-6 py-4 bg-celoLegacy-yellow hover:bg-yellow-400 text-black rounded-2xl font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             <Wallet className="w-6 h-6" />
             <span>Conectar con Privy</span>
@@ -149,19 +149,19 @@ function LoginContent() {
             </h4>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-celo-yellow rounded-full" />
+                <div className="w-1.5 h-1.5 bg-celoLegacy-yellow rounded-full" />
                 Guardar tu progreso en los cursos
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-celo-yellow rounded-full" />
+                <div className="w-1.5 h-1.5 bg-celoLegacy-yellow rounded-full" />
                 Obtener certificados NFT
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-celo-yellow rounded-full" />
+                <div className="w-1.5 h-1.5 bg-celoLegacy-yellow rounded-full" />
                 Acceder a contenido exclusivo
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-celo-yellow rounded-full" />
+                <div className="w-1.5 h-1.5 bg-celoLegacy-yellow rounded-full" />
                 Participar en la comunidad
               </li>
             </ul>

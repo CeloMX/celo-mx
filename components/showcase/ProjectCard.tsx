@@ -79,7 +79,7 @@ export function ProjectCard({ project }: { project: Project }) {
             {project.metadata?.chain && <span className="mr-3">Chain: {project.metadata.chain}</span>}
             {project.metadata?.category && <span>Categoria: {project.metadata.category}</span>}
           </div>
-<a href={project.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium px-3 py-2 rounded-lg border border-celo-yellow bg-black text-celo-yellow hover:bg-neutral-900 dark:bg-celo-yellow dark:text-black dark:hover:bg-celo-yellow/90">
+<a href={project.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium px-3 py-2 rounded-lg border border-celo-yellow bg-black text-celo-yellow hover:bg-neutral-900 dark:bg-celoLegacy-yellow dark:text-black dark:hover:bg-celoLegacy-yellow/90">
             Visitar
           </a>
         </div>

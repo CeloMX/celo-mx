@@ -1,0 +1,13 @@
+{
+  "network": "celo-mainnet",
+  "chainId": 42220,
+  "contractName": "CMTFaucet",
+  "address": "0xcFCbdA62EA96A67d1FFb213d7BBa086cbAc570c6",
+  "deployer": "0xc5CE44D994C00F2FeA2079408e8b6c18b6D2F156",
+  "deploymentTx": "0x2209f7ac72f8e8e312d9123784caccfe7321bba9d2c65db525a85bbee0885919",
+  "blockNumber": 51540606,
+  "gasUsed": "586313",
+  "gasPrice": "25142336749",
+  "explorerUrl": "https://celoscan.io/address/0xcFCbdA62EA96A67d1FFb213d7BBa086cbAc570c6",
+  "timestamp": "2025-11-18T04:49:28.089Z"
+}

@@ -17,7 +17,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-celo-bg/95 border-b border-celo-border">
+    <header className="sticky top-0 z-40 backdrop-blur-xl bg-celo-bg lg:bg-celo-bg/95 border-b border-celo-border">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
           <CeloLogo width={80} height={18} className="text-celo-yellow sm:w-[100px] sm:h-[22px]" />
@@ -146,6 +146,5 @@ export default function Header() {
     </header>
   );
 }
-
 
 

@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
         image: true,
         category: true,
         sizes: true,
+        tag: true,
         stock: true,
       }
     })

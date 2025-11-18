@@ -21,6 +21,7 @@ type MerchItem = {
   image: string;
   category: 'clothing' | 'accessories';
   sizes?: string[];
+  tag?: string | null;
   stock: number;
   isActive: boolean;
 }
@@ -120,7 +121,14 @@ function MerchPageInner() {
     
     if (isPurchased(item.id)) return;
     if (item.sizes && item.sizes.length) {
-      const chosen = selectedSizes[item.id];
+      let chosen = selectedSizes[item.id];
+      if (!chosen) {
+        const isShirt = /shirt/i.test(item.id) || /shirt/i.test(item.name);
+        if (isShirt) {
+          chosen = 'XL';
+          setSelectedSizes((s) => ({ ...s, [item.id]: 'XL' }));
+        }
+      }
       if (!chosen) {
         alert('Selecciona una talla antes de comprar');
         return;
@@ -175,7 +183,9 @@ function MerchPageInner() {
 
       console.log('[MERCH] ✅ Real CMT transfer completed:', txHash);
 
-      const selectedSize = selectedSizes[item.id];
+      const selectedSize = (item.sizes && item.sizes.length)
+        ? (selectedSizes[item.id] || ((/shirt/i.test(item.id) || /shirt/i.test(item.name)) ? 'XL' : undefined))
+        : undefined;
       const userIdForPurchase = userIdParam || resolvedUserId || null;
       const purchaseRes = await fetch('/api/merch/purchase', {
         method: 'POST',
@@ -388,6 +398,11 @@ function MerchPageInner() {
                 </div>
               )}
               <div className="aspect-square bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center relative">
+                {item.tag ? (
+                  <span className={`absolute ${isPurchased(item.id) ? 'top-2 left-2' : 'top-2 right-2'} z-10 px-2 py-1 rounded-lg bg-celoLegacy-yellow text-black text-xs font-semibold shadow`}>
+                    {item.tag}
+                  </span>
+                ) : null}
                 <img
                   src={item.image}
                   alt={item.name}
@@ -425,7 +440,7 @@ function MerchPageInner() {
                       {item.stock > 0 ? `Quedan ${item.stock}` : 'Sin stock'}
                     </span>
                   </div>
-                  {item.sizes && item.sizes.length ? (
+                  {item.sizes && item.sizes.length && !(/shirt/i.test(item.id) || /shirt/i.test(item.name)) ? (
                     <div className="mt-4">
                       <select
                         value={selectedSizes[item.id] || ''}

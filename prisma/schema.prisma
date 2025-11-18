@@ -225,6 +225,7 @@ model MerchItem {
   createdat   DateTime   @default(now()) @db.Timestamptz(6)
   updatedat   DateTime   @default(now()) @db.Timestamptz(6)
   stock       Int?       @db.SmallInt
+  tag         String?
   Purchase    Purchase[]
 }
 

@@ -107,6 +107,13 @@ export default function Header() {
               Academia
             </Link>
             <Link 
+              href="/merch" 
+              onClick={closeMenu}
+              className="text-celo-fg font-medium py-2 transition-colors duration-200 hover:opacity-70"
+            >
+              Merch
+            </Link>
+            <Link 
               href="/marketplace" 
               onClick={closeMenu}
               className="text-celo-fg font-medium py-2 transition-colors duration-200 hover:opacity-70"
@@ -146,5 +153,4 @@ export default function Header() {
     </header>
   );
 }
-
 

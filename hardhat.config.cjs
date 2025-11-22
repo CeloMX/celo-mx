@@ -35,7 +35,6 @@ module.exports = {
       accounts: DEPLOYER_PRIVATE_KEY ? [DEPLOYER_PRIVATE_KEY] : [],
       chainId: 44787,
       gas: 10000000,
-      gasPrice: 0.5 * 10 ** 9, // 0.5 Gwei
     },
     // Celo Mainnet
     celo: {
@@ -43,7 +42,6 @@ module.exports = {
       accounts: DEPLOYER_PRIVATE_KEY ? [DEPLOYER_PRIVATE_KEY] : [],
       chainId: 42220,
       gas: 10000000,
-      gasPrice: 0.5 * 10 ** 9, // 0.5 Gwei
     },
   },
   namedAccounts: {

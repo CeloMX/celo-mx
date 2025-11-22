@@ -41,6 +41,14 @@ export const tokens: Token[] = [
     logo: "https://raw.githubusercontent.com/ubeswap/default-token-list/master/assets/asset_cREAL.png",
     isStablecoin: false,
   },
+  {
+    symbol: "X402",
+    name: "X402 Token",
+    address: "0x37290B3f613344Ef22750f732aa9dF846f80DDA0",
+    decimals: 18,
+    logo: "https://raw.githubusercontent.com/ubeswap/default-token-list/master/assets/asset_cUSD.png",
+    isStablecoin: false,
+  },
 ];
 
 export default { tokens };

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const headers = new Headers(request.headers);
   const paymentHeader = headers.get('x-payment');
   const recipient = ('0xc5CE44D994C00F2FeA2079408e8b6c18b6D2F156') as Address | undefined;
-  if (!recipient) return NextResponse.json({ error: 'recipient_not_configured' }, { status: 500 });
+  if (!recipient) return NextResponse.json({ error: 'recipient_not_configured_' }, { status: 500 });
 
   const x402Token = tokens.find(t => t.symbol === 'X402');
   if (!x402Token) return NextResponse.json({ error: 'token_not_configured' }, { status: 500 });

@@ -40,7 +40,7 @@ export default function LessonProgress({ course, current, className = '' }: Less
         </div>
         <div className="w-full bg-white/10 rounded-full h-2">
           <div 
-            className="bg-celo-yellow h-2 rounded-full transition-all duration-300 ease-out"
+            className="bg-celoLegacy-yellow h-2 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>

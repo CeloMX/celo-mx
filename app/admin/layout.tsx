@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Users, Settings, Home, Plus, List, LogOut, User } from 'lucide-react';
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Courses', href: '/admin/courses', icon: BookOpen },
   { name: 'Create Course', href: '/admin/courses/create', icon: Plus },
   { name: 'Instructors', href: '/admin/instructors', icon: Users },
+  { name: 'Smart Accounts', href: '/admin/smart-accounts', icon: List },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
@@ -24,19 +25,10 @@ export default function AdminLayout({
   
   // Always call the hook (React Hook rules)
   const authData = useRequireAdmin();
-  const { user, wallet, logout, isLoading } = authData;
+  const { user, wallet, logout } = authData;
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-600">Verificando permisos de administrador...</p>
-        </div>
-      </div>
-    );
-  }
+  // No loading state - middleware handles auth, just render
 
   return (
     <div className="min-h-screen bg-gray-50">

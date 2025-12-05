@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "impact-market-maker",
+    "title": "Impact Market Maker",
+    "url": "https://imm-jet.vercel.app/",
+    "description": "Terminal DeFi con trading, listados de tokens, vesting y panel de métricas para el ecosistema Celo.",
+    "tags": ["defi", "trading", "dashboard"],
+    "metadata": { "chain": "Celo", "category": "DeFi" }
+  },
+  {
+    "slug": "de-payments",
+    "title": "De Payments",
+    "url": "https://de-payments.vercel.app/",
+    "description": "Pagos cripto sencillos y rápidos sobre Celo para comercios y usuarios.",
+    "tags": ["payments", "merchant", "ux"],
+    "metadata": { "chain": "Celo", "category": "Pagos" }
+  },
+  {
+    "slug": "somos",
+    "title": "SOMOS",
+    "url": "https://somos-two.vercel.app/",
+    "description": "Sistema Organizado de Movilización Social: coordinación y herramientas comunitarias.",
+    "tags": ["social", "coordination", "community"],
+    "metadata": { "chain": "Celo", "category": "Social" }
+  },
+  {
+    "slug": "celoween",
+    "title": "Celoween",
+    "url": "https://celoween.vercel.app/",
+    "description": "Plataforma de concursos y votaciones con gasless y NFTs en Celo.",
+    "tags": ["contest", "gasless", "nft"],
+    "metadata": { "chain": "Celo", "category": "Community" }
+  },
+  {
+    "slug": "skatebonties",
+    "title": "SkateBounties",
+    "url": "https://skatebonties.vercel.app/",
+    "description": "Bounties para skaters: encuentra retos, súbelos y gana recompensas.",
+    "tags": ["bounties", "sports", "community"],
+    "metadata": { "chain": "Celo", "category": "Bounties" }
+  }
+]

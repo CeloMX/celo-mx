@@ -32,7 +32,7 @@ export default function CollectionHero({ collection, onViewAssets }: CollectionH
           <div className="order-2 lg:order-1">
             <div className="aspect-square celo-border border rounded-2xl overflow-hidden bg-gradient-to-br from-celo-yellow/20 to-celo-lime/20 flex items-center justify-center">
               <div className="text-center p-8">
-                <div className="w-24 h-24 mx-auto mb-4 celo-border border-2 rounded-full bg-celo-yellow/30 flex items-center justify-center">
+                <div className="w-24 h-24 mx-auto mb-4 celo-border border-2 rounded-full bg-celoLegacy-yellow/30 flex items-center justify-center">
                   <ShoppingCart className="w-12 h-12 celo-heading" />
                 </div>
                 <p className="text-sm celo-text opacity-70">Imagen de colección</p>
@@ -76,7 +76,7 @@ export default function CollectionHero({ collection, onViewAssets }: CollectionH
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={handleBuy}
-                className="flex-1 bg-celo-yellow hover:bg-celo-yellowAlt text-celo-black font-semibold py-3 rounded-xl transition-all duration-200 hover:shadow-lg"
+                className="flex-1 bg-celoLegacy-yellow hover:bg-celoLegacy-yellowAlt text-celo-black font-semibold py-3 rounded-xl transition-all duration-200 hover:shadow-lg"
                 aria-label="Comprar NFT de la colección"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
@@ -86,7 +86,7 @@ export default function CollectionHero({ collection, onViewAssets }: CollectionH
               <Button
                 onClick={onViewAssets}
                 variant="outline"
-                className="flex-1 celo-border celo-text hover:bg-celo-yellow/10 py-3 rounded-xl transition-all duration-200"
+                className="flex-1 celo-border celo-text hover:bg-celoLegacy-yellow/10 py-3 rounded-xl transition-all duration-200"
                 aria-label="Ver todos los assets de la colección"
               >
                 <Eye className="w-4 h-4 mr-2" />

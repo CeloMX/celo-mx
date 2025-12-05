@@ -98,8 +98,22 @@ Sigue estos pasos para crear y respaldar tu wallet. _Tip:_ prueba en testnet.`,
     }
   })
   
+  await p.merchItem.upsert({
+    where:{ id:'celo-shirt' },
+    update:{ name:'Celo MX Shirt', description:'Official Celo Mexico community shirt. High quality cotton with Celo logo.', price:3, image:'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_shirt.jpg', category:'clothing', sizes:['S','M','L','XL'], stock:20, isActive:true },
+    create:{ id:'celo-shirt', name:'Celo MX Shirt', description:'Official Celo Mexico community shirt. High quality cotton with Celo logo.', price:3, image:'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_shirt.jpg', category:'clothing', sizes:['S','M','L','XL'], stock:20, isActive:true }
+  })
+  await p.merchItem.upsert({
+    where:{ id:'celo-beanie' },
+    update:{ name:'Celo MX Beanie', description:'Cozy Celo Mexico beanie. Keep warm while showing your Celo pride.', price:2, image:'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_beanie.jpg', category:'accessories', sizes:[], stock:30, isActive:true },
+    create:{ id:'celo-beanie', name:'Celo MX Beanie', description:'Cozy Celo Mexico beanie. Keep warm while showing your Celo pride.', price:2, image:'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_beanie.jpg', category:'accessories', sizes:[], stock:30, isActive:true }
+  })
+  await p.merchItem.upsert({
+    where:{ id:'celo-sticker' },
+    update:{ name:'Celo MX Sticker', description:'Premium Celo Mexico sticker. Perfect for laptops, water bottles, and more.', price:1, image:'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_sticker.jpg', category:'accessories', sizes:[], stock:100, isActive:true },
+    create:{ id:'celo-sticker', name:'Celo MX Sticker', description:'Premium Celo Mexico sticker. Perfect for laptops, water bottles, and more.', price:1, image:'https://tgjqcddmqtaceidmafyn.supabase.co/storage/v1/object/public/merch/celo_sticker.jpg', category:'accessories', sizes:[], stock:100, isActive:true }
+  })
+
   console.log('✅ Database seeded successfully!')
 }
 main().then(()=>p.$disconnect()).catch(async e=>{ console.error(e); await p.$disconnect(); process.exit(1) })
-
-

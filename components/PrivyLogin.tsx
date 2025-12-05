@@ -9,16 +9,78 @@ import {
   Wallet, 
   ExternalLink,
   ChevronDown,
-  Globe
+  Globe,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
+
+function RegisterSmartAccountButton({ onDone }: { onDone?: () => void }) {
+  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
+  const auth = useAuth();
+  const [status, setStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const register = async () => {
+    if (!smartAccountAddress) return;
+    setStatus('saving');
+    setError(null);
+    try {
+      const res = await fetch('/api/users/smart-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          smartAccount: smartAccountAddress.toLowerCase(),
+          walletAddress: (auth.wallet?.address || '').toLowerCase(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save');
+      }
+      setStatus('saved');
+      setTimeout(() => {
+        setStatus('idle');
+        onDone?.();
+      }, 800);
+    } catch (e: any) {
+      setError(e.message || 'Error');
+      setStatus('error');
+    }
+  };
+
+  if (!isSmartAccountReady || !smartAccountAddress) {
+    return (
+      <button disabled className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 dark:text-celo-yellow/60 bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl cursor-not-allowed">
+        <Wallet className="w-4 h-4" />
+        <span>Smart account no disponible</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={register}
+      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg border border-celo-yellow bg-black text-white hover:bg-neutral-900 dark:bg-celoLegacy-yellow dark:text-black dark:hover:bg-celoLegacy-yellow/90 disabled:opacity-50"
+    >
+      <Wallet className="w-4 h-4" />
+      <span>
+        {status === 'saving' ? 'Guardando…' : status === 'saved' ? 'Registrado ✓' : 'Registrar Smart Account'}
+      </span>
+    </button>
+  );
+}
 
 export default function PrivyLogin() {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [copiedSmart, setCopiedSmart] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount();
+  const { balances, isLoading: balancesLoading } = useTokenBalances(smartAccountAddress ?? undefined);
   
   // Emergency reset function for stuck sessions
   const forceReset = () => {
@@ -82,6 +144,17 @@ export default function PrivyLogin() {
     }
   };
 
+  const copySmartAddress = async () => {
+    if (!smartAccountAddress) return;
+    try {
+      await navigator.clipboard.writeText(smartAccountAddress);
+      setCopiedSmart(true);
+      setTimeout(() => setCopiedSmart(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy smart account address:', err);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -91,9 +164,13 @@ export default function PrivyLogin() {
     }
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (desktop only, mobile uses backdrop)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Skip if clicking on backdrop (handled by backdrop onClick)
+      if ((event.target as HTMLElement).classList?.contains('wallet-backdrop')) {
+        return;
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
@@ -149,9 +226,14 @@ export default function PrivyLogin() {
         <ChevronDown className={`w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform text-celo-black/70 dark:text-celo-yellow/70 ${showDropdown ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu - Glassmorphism */}
+      {/* Mobile: Full-screen modal | Desktop: Dropdown */}
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 backdrop-blur-3xl bg-white/30 dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-50 overflow-hidden">
+        <>
+          {/* Mobile backdrop */}
+          <div className="wallet-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] sm:hidden" onClick={() => setShowDropdown(false)} />
+          
+          {/* Dropdown/Modal */}
+          <div className="fixed inset-x-4 top-[calc(50%+10px)] -translate-y-1/2 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:translate-y-0 sm:mt-2 w-auto sm:w-72 backdrop-blur-3xl bg-white/95 dark:bg-black/95 sm:bg-white/30 sm:dark:bg-black/30 border border-white/40 dark:border-white/30 rounded-2xl shadow-2xl z-[100] overflow-hidden max-h-[90vh] sm:max-h-none overflow-y-auto">
           {/* Glassmorphism overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
           
@@ -219,7 +301,50 @@ export default function PrivyLogin() {
               </div>
             </div>
 
+            {/* Smart Account */}
+            {isSmartAccountReady && smartAccountAddress && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-celo-black dark:text-celo-yellow">
+                  <Coins className="w-3 h-3" />
+                  <span>Smart Account</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/25 dark:bg-black/25 border border-white/30 dark:border-white/25 backdrop-blur-md">
+                  <span className="font-mono text-xs text-celo-black dark:text-celo-yellow font-semibold">{truncate(smartAccountAddress)}</span>
+                  <button
+                    onClick={copySmartAddress}
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs bg-white/30 hover:bg-white/40 border border-white/40 rounded-lg transition-all duration-200 backdrop-blur-lg text-celo-black dark:text-celo-yellow font-medium"
+                  >
+                    {copiedSmart ? (
+                      <>
+                        <Check className="w-3 h-3 text-green-400" />
+                        <span className="text-green-400 font-medium">✓</span>
+                      </>
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="border-t border-white/10 pt-4 space-y-2">
+              {/* Register smart account */}
+              <RegisterSmartAccountButton onDone={() => setShowDropdown(false)} />
+
+              {/* Portfolio Button */}
+              <button
+                onClick={() => {
+                  router.push('/portfolio');
+                  setShowDropdown(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-celo-black dark:text-celo-yellow hover:bg-white/30 dark:hover:bg-black/30 rounded-xl transition-all duration-200 backdrop-blur-lg group font-medium"
+              >
+                <Coins className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Portafolio</span>
+                <ExternalLink className="w-3 h-3 ml-auto opacity-60 group-hover:opacity-100 transition-opacity" />
+              </button>
+
               {/* Account Button */}
               <button
                 onClick={() => {
@@ -244,6 +369,7 @@ export default function PrivyLogin() {
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   );

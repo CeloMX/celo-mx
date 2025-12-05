@@ -31,3 +31,8 @@ ssl/certificates/*.key
 #pnpm-lock.yaml
 #yarn.lock
 .vercel
+
+# Hardhat/Contracts build outputs
+artifacts/
+cache/
+typechain-types/

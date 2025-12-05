@@ -45,6 +45,8 @@
     "hardhat:test": "hardhat test",
     "deploy:alfajores": "hardhat run scripts/deploy.ts --network alfajores",
     "deploy:celo": "hardhat run scripts/deploy.ts --network celo",
+    "deploy:cmt-faucet:celo": "hardhat run scripts/deploy-cmt-faucet.cjs --network celo",
+    "faucet:set-amount:celo": "hardhat run scripts/set-faucet-amount.cjs --network celo",
     "deploy:local": "hardhat run scripts/deploy.ts --network hardhat",
     "verify:alfajores": "hardhat verify --network alfajores",
     "verify:celo": "hardhat verify --network celo",

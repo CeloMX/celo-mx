@@ -11,6 +11,12 @@ const NODE_ENV = process.env.NODE_ENV;
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 /**
+ * Admin session cache - avoid repeated auth checks for same session
+ */
+const adminSessionCache = new Map<string, { isAdmin: boolean; expiresAt: number }>();
+const SESSION_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
  * Rate limiting configuration
  */
 const RATE_LIMIT_CONFIG = {
@@ -236,6 +242,30 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     console.log(`[DEBUG] Checking auth for protected route: ${pathname}`);
     console.log(`[DEBUG] isAdminPage: ${isAdminPage}, isAdminAPI: ${isAdminAPI}, isProtectedAPI: ${isProtectedAPI}`);
     
+    // Check session cache first for admin pages
+    const cookiesHeader = request.headers.get('cookie');
+    let cachedAdminStatus: { isAdmin: boolean; expiresAt: number } | undefined;
+    if (cookiesHeader && (isAdminPage || isAdminAPI)) {
+      const walletMatch = cookiesHeader.match(/wallet-address=([^;]+)/);
+      const walletAddress = walletMatch ? decodeURIComponent(walletMatch[1]) : null;
+      if (walletAddress) {
+        const cacheKey = `admin:${walletAddress}`;
+        cachedAdminStatus = adminSessionCache.get(cacheKey);
+        if (cachedAdminStatus && cachedAdminStatus.expiresAt > Date.now()) {
+          console.log(`[DEBUG] Using cached admin status for ${walletAddress}`);
+          // Allow access immediately from cache
+          if (cachedAdminStatus.isAdmin) {
+            console.log(`[DEBUG] Cached admin access granted for: ${pathname}`);
+            const response = NextResponse.next();
+            return response;
+          }
+        } else if (cachedAdminStatus) {
+          // Expired cache entry
+          adminSessionCache.delete(cacheKey);
+        }
+      }
+    }
+    
     const authResult = await validateUserAuth(request);
     console.log(`[DEBUG] Auth result:`, {
       isAuthenticated: authResult.isAuthenticated,
@@ -243,6 +273,20 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       error: authResult.error,
       hasUser: !!authResult.user
     });
+    
+    // Cache admin status if successful
+    if (authResult.isAuthenticated && authResult.isAdmin && cookiesHeader) {
+      const walletMatch = cookiesHeader.match(/wallet-address=([^;]+)/);
+      const walletAddress = walletMatch ? decodeURIComponent(walletMatch[1]) : null;
+      if (walletAddress) {
+        const cacheKey = `admin:${walletAddress}`;
+        adminSessionCache.set(cacheKey, {
+          isAdmin: true,
+          expiresAt: Date.now() + SESSION_CACHE_TTL
+        });
+        console.log(`[DEBUG] Cached admin status for ${walletAddress}`);
+      }
+    }
     
     if (!authResult.isAuthenticated) {
       logSecurityEvent('AUTHENTICATION_FAILED', request, { error: authResult.error });
@@ -292,19 +336,16 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   
-  // CSP header (restrictive for security)
+  // CSP header (restrictive for security) - UPDATED FOR ZERODEV AND WALLETCONNECT
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://auth.privy.io https://vercel.live",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    // Allow images from common CDNs and YouTube thumbnails used in course previews
-    "img-src 'self' data: blob: https://i.postimg.cc https://res.cloudinary.com https://images.unsplash.com https://via.placeholder.com https://img.youtube.com https://i.ytimg.com",
-    // Allow on-chain/RPC and auth connections required for web3 + Privy + WalletConnect
-    "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io",
-    // Allow embedded frames for Privy and video providers used in course pages
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' https: data: blob:",
+    // Updated connect-src to include ZeroDev and WalletConnect services
+    "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.walletconnect.com https://rpc.walletconnect.com https://explorer-api.walletconnect.com https://alfajores-forno.celo-testnet.org https://forno.celo.org https://*.celo.org https://*.celoscan.io https://rpc.zerodev.app https://pulse.walletconnect.org https://api.web3modal.org https://api.web3modal.org/projects/v1/origins https://api.web3modal.org/getAnalyticsConfig",
     "frame-src https://auth.privy.io https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
-    // Allow media streams if used outside iframes
     "media-src 'self' https: data: blob:",
   ].join('; ');
   

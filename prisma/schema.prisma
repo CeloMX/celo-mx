@@ -192,9 +192,11 @@ model User {
   displayName        String?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
+  smartAccount       String?
   Certificate        Certificate[]
   CourseEnrollment   CourseEnrollment[]
   CourseReview       CourseReview[]
+  Purchase           Purchase[]
   UserLessonProgress UserLessonProgress[]
 }
 
@@ -210,6 +212,36 @@ model UserLessonProgress {
   User          User                 @relation(fields: [userId], references: [id])
 
   @@unique([userId, lessonId])
+}
+
+model MerchItem {
+  id          String     @id
+  name        String
+  description String?
+  price       Int
+  image       String
+  category    String
+  sizes       String[]
+  createdat   DateTime   @default(now()) @db.Timestamptz(6)
+  updatedat   DateTime   @default(now()) @db.Timestamptz(6)
+  stock       Int?       @db.SmallInt
+  tag         String?
+  Purchase    Purchase[]
+}
+
+model Purchase {
+  id              String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userid          String
+  itemid          String
+  txhash          String    @unique(map: "purchase_txhash_key")
+  amount          Int
+  selectedsize    String?
+  merchantaddress String    @default("0x65E8F19f1e8a5907F388E416876B7e1250a9863C")
+  status          String    @default("completed")
+  createdat       DateTime  @default(now()) @db.Timestamptz(6)
+  updatedat       DateTime  @default(now()) @db.Timestamptz(6)
+  MerchItem       MerchItem @relation(fields: [itemid], references: [id], map: "purchase_item_fkey")
+  User            User      @relation(fields: [userid], references: [id], map: "purchase_user_fkey")
 }
 
 enum LessonProgressStatus {

@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { wagmiConfig } from '@/lib/wagmi';
 import { ZeroDevSmartWalletProvider } from '@/lib/contexts/ZeroDevSmartWalletProvider';
+import { AuthCookieSync } from '@/components/AuthCookieSync';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -40,6 +41,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         supportedChains: [celo], // Only mainnet supported
       }}
     >
+      <AuthCookieSync />
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
           <ZeroDevSmartWalletProvider zeroDevProjectId={zeroDevProjectId}>

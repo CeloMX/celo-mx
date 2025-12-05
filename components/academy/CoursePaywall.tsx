@@ -30,7 +30,7 @@ export function CoursePaywall({
         {/* Locked Icon */}
         <div className="flex justify-center mb-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-celo-yellow/20 dark:bg-celo-yellow/10 rounded-full blur-xl" />
+            <div className="absolute inset-0 bg-celoLegacy-yellow/20 dark:bg-celoLegacy-yellow/10 rounded-full blur-xl" />
             <div className="relative bg-celo-bg border-2 border-celo-border rounded-full p-6">
               <Lock className="w-12 h-12 text-celo-yellow" />
             </div>
@@ -63,7 +63,7 @@ export function CoursePaywall({
                 <Button
                   size="lg"
                   onClick={login}
-                  className="bg-celo-yellow hover:bg-celo-yellow/90 text-black font-bold"
+                  className="bg-celoLegacy-yellow hover:bg-celoLegacy-yellow/90 text-black font-bold"
                 >
                   Conectar Wallet
                 </Button>
@@ -122,7 +122,7 @@ export function CoursePaywall({
                 <Link href={`/academy/${courseSlug}`}>
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-celo-yellow hover:bg-celo-yellow/90 text-black font-bold"
+                    className="w-full sm:w-auto bg-celoLegacy-yellow hover:bg-celoLegacy-yellow/90 text-black font-bold"
                   >
                     Ver Detalles del Curso
                   </Button>

@@ -85,7 +85,7 @@ export function ZeroDevEnrollmentButton({
           
           <Button 
             onClick={login}
-            className="w-full bg-celo-yellow hover:bg-celo-yellow/90 text-black font-bold"
+            className="w-full bg-celoLegacy-yellow hover:bg-celoLegacy-yellow/90 text-black font-bold"
             size="lg"
           >
             <Wallet className="mr-2 h-4 w-4" />

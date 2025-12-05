@@ -48,10 +48,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Providers>
             <div className="min-h-screen flex flex-col">
               <Header />
-              <main className="flex-1 overflow-x-hidden">{children}</main>
+              <main className="flex-1 overflow-x-hidden pt-8 sm:pt-10 lg:pt-12">{children}</main>
               <Footer />
             </div>
-            <ContractDebug />
           </Providers>
         </ThemeProvider>
       </body>

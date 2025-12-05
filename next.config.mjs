@@ -48,37 +48,10 @@ const nextConfig = {
       },
     ],
   },
-  // Simplified webpack config for Next.js 15
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
-    
-    // Ignore React Native dependencies in web build
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@react-native-async-storage/async-storage': false,
-      'react-native': false,
-    };
-    
-    // Ignore React Native modules from being processed
-    config.externals = config.externals || [];
-    config.externals.push({
-      '@react-native-async-storage/async-storage': 'commonjs @react-native-async-storage/async-storage',
-      'react-native': 'commonjs react-native',
-    });
-    
-    return config;
-  },
+  turbopack: {},
   // Ensure proper client/server component handling
   transpilePackages: [],
 };
 
 export default nextConfig;
-
 

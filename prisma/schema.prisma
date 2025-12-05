@@ -234,3 +234,15 @@ enum Visibility {
   LOGGED_IN
   WALLET
 }
+
+model BuildathonProject {
+  id            String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  teamName      String
+  teamMembers   String
+  githubRepo    String?
+  karmaGapLink  String?
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@map("BuildathonProject")
+}

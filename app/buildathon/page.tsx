@@ -3,6 +3,7 @@ import FeatureCard from '@/components/FeatureCard';
 import Link from 'next/link';
 import Image from 'next/image';
 import ParallaxBanner from '@/components/ParallaxBanner';
+import RegisterButton from '@/components/buildathon/RegisterButton';
 
 export default function BuildathonPage() {
   const formUrl = "https://app.deform.cc/form/7d776831-8f8a-4fd6-81f7-b60227023c8c/";
@@ -235,15 +236,7 @@ export default function BuildathonPage() {
             <p className="text-lg text-celo-muted mb-8 max-w-2xl mx-auto leading-relaxed">
               No pierdas la oportunidad de ser parte del futuro de Web3 en México. Únete a otros builders apasionados y crea algo increíble.
             </p>
-            <a 
-              href={formUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group relative overflow-hidden rounded-full border-celo-fg dark:border-celo-yellow border-[0.3px] px-8 py-3 font-bold text-black dark:text-celo-yellow text-sm bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0 inline-block"
-            >
-              <span className="relative z-10 dark:group-hover:text-black">Aplica al Buildathon</span>
-              <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
-            </a>
+            <RegisterButton />
             <p className="mt-6 text-sm text-celo-muted">
               Las inscripciones son limitadas • Registro gratuito
             </p>

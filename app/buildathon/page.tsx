@@ -1,12 +1,16 @@
+'use client';
+
+import { useState } from 'react';
 import Section from '@/components/Section';
 import FeatureCard from '@/components/FeatureCard';
 import Link from 'next/link';
 import Image from 'next/image';
 import ParallaxBanner from '@/components/ParallaxBanner';
 import RegisterButton from '@/components/buildathon/RegisterButton';
+import RegisterProjectModal from '@/components/buildathon/RegisterProjectModal';
 
 export default function BuildathonPage() {
-  const formUrl = "https://app.deform.cc/form/7d776831-8f8a-4fd6-81f7-b60227023c8c/";
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   return (
     <div className="min-h-screen bg-[#FCF6F1] dark:bg-celo-bg text-celo-fg">
@@ -26,15 +30,13 @@ export default function BuildathonPage() {
               <div className="h-1 w-20 bg-celo-yellow rounded-full mt-6"></div>
               
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <a 
-                  href={formUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <button 
+                  onClick={() => setIsModalOpen(true)}
                   className="group relative overflow-hidden rounded-full border-celo-fg dark:border-celo-yellow border-[0.3px] px-8 py-3 font-bold text-black dark:text-celo-yellow text-xs sm:text-sm bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0 inline-block"
                 >
-                  <span className="relative z-10 dark:group-hover:text-black">Aplica Ahora</span>
+                  <span className="relative z-10 dark:group-hover:text-black">Registrar Proyecto</span>
                   <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
-                </a>
+                </button>
                 <Link 
                   href="/academy" 
                   className="group flex items-center gap-2 celo-text font-medium text-sm sm:text-base hover:opacity-80 transition-all duration-200"
@@ -119,14 +121,14 @@ export default function BuildathonPage() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start gap-4 p-6 border border-celo-border rounded-lg hover:border-celo-yellow/50 transition-colors">
-              <div className="font-bold text-celo-yellow text-xl sm:text-2xl min-w-[80px]">28 Nov</div>
+              <div className="font-bold text-celo-yellow text-xl sm:text-2xl min-w-[80px]">5 Dic</div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg sm:text-xl mb-2">Cierre de Inscripciones</h3>
                 <p className="text-celo-muted leading-relaxed"> Último día para inscribirte al Buildathon. ¡No te quedes fuera!</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start gap-4 p-6 border border-celo-border rounded-lg hover:border-celo-yellow/50 transition-colors">
-              <div className="font-bold text-celo-yellow text-xl sm:text-2xl min-w-[80px]">5 Dic</div>
+              <div className="font-bold text-celo-yellow text-xl sm:text-2xl min-w-[80px]">10 Dic</div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg sm:text-xl mb-2">Anuncio de ganadores</h3>
                 <p className="text-celo-muted leading-relaxed">Conoce a los proyectos ganadores y celebra el impacto creado por toda la comunidad.</p>
@@ -243,6 +245,8 @@ export default function BuildathonPage() {
           </div>
         </Section>
       </div>
+
+      <RegisterProjectModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>
   );
 }

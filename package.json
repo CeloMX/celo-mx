@@ -11,7 +11,7 @@
     "build": "prisma generate && next build --webpack",
     "vercel-build": "NODE_OPTIONS='--max-old-space-size=4096' prisma generate && NODE_OPTIONS='--max-old-space-size=4096' next build --webpack",
     "start": "next start",
-    "lint": "eslint app components lib hooks config data --ext .ts,.tsx --max-warnings=0",
+    "lint": "eslint app components lib hooks config data --max-warnings=0",
     "format": "prettier --write .",
     "type-check": "prisma generate && tsc --noEmit",
     "prisma:generate": "prisma generate",

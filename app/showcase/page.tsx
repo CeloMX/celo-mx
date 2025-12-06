@@ -1,9 +1,22 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import projects from './projects.json';
 
-function previewImageUrl(url: string) {
+function previewImageUrl(url: string, customImage?: string, useFallback = false) {
+  if (customImage) {
+    return customImage;
+  }
   const width = 1200;
   const height = 630;
+  
+  if (useFallback) {
+    // Servicio alternativo público (thum.io)
+    return `https://image.thum.io/get/width/${width}/crop/${height}/${url}`;
+  }
+  
+  // Servicio principal: WordPress mshots
   return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=${width}&h=${height}`;
 }
 
@@ -61,17 +74,49 @@ export default function ShowcasePage() {
         <section className="mb-12">
           <h2 className="text-xl font-semibold text-celo-fg mb-4">Proyectos activos</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((p) => (
-              <article key={p.slug} className="bg-celo-bg border border-celo-border rounded-2xl overflow-hidden shadow-lg flex flex-col">
-                <div className="relative aspect-[1200/630] bg-neutral-100 dark:bg-neutral-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={previewImageUrl(p.url)}
-                    alt={p.title}
-                    className="object-cover w-full h-full"
-                    loading="lazy"
-                  />
-                </div>
+            {projects.map((p) => {
+              const ProjectImage = ({ project }: { project: typeof p }) => {
+                const [imgSrc, setImgSrc] = useState(previewImageUrl(project.url, (project as any).image, false));
+                const [errorCount, setErrorCount] = useState(0);
+                const [showPlaceholder, setShowPlaceholder] = useState(false);
+
+                const handleError = () => {
+                  if (errorCount === 0) {
+                    // Primera falla: intentar con servicio alternativo
+                    setErrorCount(1);
+                    setImgSrc(previewImageUrl(project.url, (project as any).image, true));
+                  } else {
+                    // Segunda falla: mostrar placeholder
+                    setShowPlaceholder(true);
+                  }
+                };
+
+                return (
+                  <div className="relative aspect-[1200/630] bg-neutral-100 dark:bg-neutral-900 overflow-hidden">
+                    {showPlaceholder ? (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-celoLegacy-yellow/10 to-celoLegacy-yellow/5 border-2 border-dashed border-celo-yellow/30">
+                        <div className="text-center p-4">
+                          <div className="text-4xl mb-2">🌐</div>
+                          <p className="text-xs text-celo-muted">{project.title}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={imgSrc}
+                        alt={project.title}
+                        className="object-cover w-full h-full"
+                        loading="lazy"
+                        onError={handleError}
+                      />
+                    )}
+                  </div>
+                );
+              };
+
+              return (
+                <article key={p.slug} className="bg-celo-bg border border-celo-border rounded-2xl overflow-hidden shadow-lg flex flex-col">
+                  <ProjectImage project={p} />
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-lg font-semibold text-celo-fg mb-2">{p.title}</h3>
                   <p className="text-sm text-celo-muted mb-4 line-clamp-3">{p.description}</p>
@@ -95,7 +140,8 @@ export default function ShowcasePage() {
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </section>
 

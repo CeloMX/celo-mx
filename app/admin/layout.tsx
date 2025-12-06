@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Users, Settings, Home, Plus, List, LogOut, User } from 'lucide-react';
+import { BookOpen, Users, Settings, Home, Plus, List, LogOut, User, FileText } from 'lucide-react';
 import { useRequireAdmin } from '@/hooks/useAuth';
 
 const navigation = [
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Create Course', href: '/admin/courses/create', icon: Plus },
   { name: 'Instructors', href: '/admin/instructors', icon: Users },
   { name: 'Smart Accounts', href: '/admin/smart-accounts', icon: List },
+  { name: 'Registro de Proyectos', href: '/admin/registrodeproyectos', icon: FileText },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

@@ -56,23 +56,31 @@ export function CourseProgressProvider({
   
   const tokenId = getCourseTokenId(courseSlug, courseId);
   
-  // Get contract data with consistent address (same as enrollment)
-  const modulesCompleted = useModulesCompleted(addressForProgressCheck, tokenId);
+  // Read contract data for BOTH wallet and smart account addresses and combine
+  const walletModulesCompleted = useModulesCompleted(walletAddress, tokenId);
+  const smartModulesCompleted = useModulesCompleted(smartAccount.smartAccountAddress || undefined, tokenId);
   
-  // Get individual module completion status (0, 1, 2, ...)
-  const module0Completed = useHasCompletedModule(addressForProgressCheck, tokenId, 0);
-  const module1Completed = useHasCompletedModule(addressForProgressCheck, tokenId, 1);
-  const module2Completed = useHasCompletedModule(addressForProgressCheck, tokenId, 2);
-  const module3Completed = useHasCompletedModule(addressForProgressCheck, tokenId, 3);
-  const module4Completed = useHasCompletedModule(addressForProgressCheck, tokenId, 4);
+  // Individual module completion status for wallet
+  const wallet_module0 = useHasCompletedModule(walletAddress, tokenId, 0);
+  const wallet_module1 = useHasCompletedModule(walletAddress, tokenId, 1);
+  const wallet_module2 = useHasCompletedModule(walletAddress, tokenId, 2);
+  const wallet_module3 = useHasCompletedModule(walletAddress, tokenId, 3);
+  const wallet_module4 = useHasCompletedModule(walletAddress, tokenId, 4);
+  
+  // Individual module completion status for smart account
+  const smart_module0 = useHasCompletedModule(smartAccount.smartAccountAddress || undefined, tokenId, 0);
+  const smart_module1 = useHasCompletedModule(smartAccount.smartAccountAddress || undefined, tokenId, 1);
+  const smart_module2 = useHasCompletedModule(smartAccount.smartAccountAddress || undefined, tokenId, 2);
+  const smart_module3 = useHasCompletedModule(smartAccount.smartAccountAddress || undefined, tokenId, 3);
+  const smart_module4 = useHasCompletedModule(smartAccount.smartAccountAddress || undefined, tokenId, 4);
   
   // Build completion status array
   const moduleCompletionStatus = [
-    module0Completed.data || false,
-    module1Completed.data || false,
-    module2Completed.data || false,
-    module3Completed.data || false,
-    module4Completed.data || false,
+    (wallet_module0.data || false) || (smart_module0.data || false),
+    (wallet_module1.data || false) || (smart_module1.data || false),
+    (wallet_module2.data || false) || (smart_module2.data || false),
+    (wallet_module3.data || false) || (smart_module3.data || false),
+    (wallet_module4.data || false) || (smart_module4.data || false),
   ].slice(0, totalModules);
   
   // Count actual completed modules from individual checks
@@ -83,10 +91,9 @@ export function CourseProgressProvider({
   const isComplete = progressPercentage === 100;
   
   // Loading state
-  const isLoading = modulesCompleted.isLoading || 
-                   module0Completed.isLoading || 
-                   module1Completed.isLoading || 
-                   module2Completed.isLoading;
+  const isLoading = (walletModulesCompleted.isLoading || smartModulesCompleted.isLoading) ||
+                   wallet_module0.isLoading || wallet_module1.isLoading || wallet_module2.isLoading ||
+                   smart_module0.isLoading || smart_module1.isLoading || smart_module2.isLoading;
   
   console.log('[COURSE PROGRESS PROVIDER] PROGRESS DATA:', {
     walletAddress,
@@ -98,7 +105,8 @@ export function CourseProgressProvider({
     completedModules,
     progressPercentage,
     moduleCompletionStatus,
-    contractModulesCompleted: modulesCompleted.data?.toString(),
+    contractModulesCompletedWallet: walletModulesCompleted.data?.toString(),
+    contractModulesCompletedSmart: smartModulesCompleted.data?.toString(),
   });
   
   const contextValue: CourseProgressState = {

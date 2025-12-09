@@ -330,8 +330,9 @@ export const ZeroDevSmartWalletProvider = ({
 
         console.log('[ZERODEV] Created smart account:', account.address);
 
-        const bundlerUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}?selfFunded=true`;
-        const paymasterUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}?selfFunded=true`;
+        const baseUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}`;
+        const bundlerUrl = `${baseUrl}?selfFunded=true`;
+        const paymasterUrl = `${baseUrl}?selfFunded=true`;
 
 
 
@@ -351,6 +352,10 @@ export const ZeroDevSmartWalletProvider = ({
           chain: FORCED_CHAIN,
           transport: http(paymasterUrl),
         });
+        const paymasterClientFallback = createZeroDevPaymasterClient({
+          chain: FORCED_CHAIN,
+          transport: http(baseUrl),
+        });
         
         console.log('[ZERODEV] Creating Kernel account client...');
         
@@ -358,10 +363,22 @@ export const ZeroDevSmartWalletProvider = ({
         const client = createKernelAccountClient({
           account,
           chain: FORCED_CHAIN,
-          bundlerTransport: http(bundlerUrl),
+          bundlerTransport: http(baseUrl),
           paymaster: {
-            getPaymasterData: (userOperation: any) =>
-              paymasterClient.sponsorUserOperation({ userOperation }),
+            getPaymasterData: async (userOperation: any) => {
+              try {
+                return await paymasterClient.sponsorUserOperation({ userOperation });
+              } catch (err: any) {
+                const msg = String(err?.message || '');
+                const details = String((err?.details as any) || '');
+                const isBundlerNotFound = msg.includes('No bundler RPC found') || details.includes('No bundler RPC found');
+                if (isBundlerNotFound) {
+                  console.warn('[ZERODEV] selfFunded paymaster unavailable on 42220, falling back to base RPC');
+                  return await paymasterClientFallback.sponsorUserOperation({ userOperation });
+                }
+                throw err;
+              }
+            },
           },
           client: publicClient,
         });

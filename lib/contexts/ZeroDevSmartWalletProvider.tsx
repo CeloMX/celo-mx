@@ -330,7 +330,7 @@ export const ZeroDevSmartWalletProvider = ({
 
         console.log('[ZERODEV] Created smart account:', account.address);
 
-        const bundlerUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}`;
+        const bundlerUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}?selfFunded=true`;
         const paymasterUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${FORCED_CHAIN.id}?selfFunded=true`;
 
 

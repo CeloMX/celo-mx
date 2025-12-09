@@ -354,12 +354,15 @@ export const ZeroDevSmartWalletProvider = ({
         
         console.log('[ZERODEV] Creating Kernel account client...');
         
-        // Create Kernel client using ZeroDev SDK with paymaster
+        // Create Kernel client using ZeroDev SDK with explicit sponsorUserOperation callback
         const client = createKernelAccountClient({
           account,
           chain: FORCED_CHAIN,
           bundlerTransport: http(bundlerUrl),
-          paymaster: paymasterClient,
+          paymaster: {
+            getPaymasterData: (userOperation: any) =>
+              paymasterClient.sponsorUserOperation({ userOperation }),
+          },
           client: publicClient,
         });
         

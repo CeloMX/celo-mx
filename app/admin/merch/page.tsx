@@ -1,8 +1,9 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import supabase from '../../../utils/supabase'
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import supabase from "../../../utils/supabase";
 
 type MerchItem = {
   id: string
@@ -65,24 +66,6 @@ export default function AdminMerchPage() {
     await load()
   }
 
-  const updateStock = async (id: string, stock: number) => {
-    await fetch(`/api/admin/merch/items/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stock })
-    })
-    await load()
-  }
-
-  const toggleActive = async (id: string, isActive: boolean) => {
-    await fetch(`/api/admin/merch/items/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isActive })
-    })
-    await load()
-  }
-
   const editItem = (item: MerchItem) => {
     setForm({
       id: item.id,
@@ -120,7 +103,7 @@ export default function AdminMerchPage() {
       const bucket = 'merch' // Bucket público existente
       const folder = type === 'image' ? 'images' : 'videos'
       const ext = file.name.split('.').pop() || 'dat'
-      const safeName = file.name.replace(/[^a-z0-9\.\-_]/gi, '_')
+      const safeName = file.name.replace(/[^a-z0-9._-]/gi, '_')
       const path = `${folder}/${Date.now()}-${safeName}`
 
       const { error: uploadError } = await supabase.storage

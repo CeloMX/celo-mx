@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/auth-server'
-import { PublishStatus, LessonProgressStatus } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { randomUUID } from 'crypto'
 
@@ -51,6 +50,7 @@ export async function GET(
       page, limit,
     })
   } catch (e) {
+    console.error('[API] reviews GET error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -103,10 +103,13 @@ export async function POST(
     try {
       revalidatePath('/academy')
       revalidatePath(`/academy/${slug}`)
-    } catch {}
+    } catch (e) {
+      console.error('[API] reviews POST revalidate error:', e)
+    }
 
     return NextResponse.json({ average: agg._avg.rating ?? null, count: agg._count })
   } catch (e) {
+    console.error('[API] reviews POST error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

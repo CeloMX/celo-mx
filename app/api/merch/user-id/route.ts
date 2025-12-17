@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ userId })
   } catch (error) {
+    console.error('[API] merch user-id error:', error)
     return NextResponse.json({ userId: null }, { status: 200 })
   }
 }

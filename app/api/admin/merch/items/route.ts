@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const items = await prisma.merchItem.findMany({})
     return NextResponse.json({ items })
   } catch (error) {
+    console.error('[API] merch items GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json({ item })
   } catch (error) {
+    console.error('[API] merch items POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

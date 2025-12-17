@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
         try {
           await prisma.user.update({ where: { id: smartUser.id }, data: { walletAddress: wallet } })
           user = smartUser
-        } catch {}
+        } catch (error) {
+          console.error('[API] merch purchases by-wallet link wallet error:', error)
+        }
       }
     }
 
@@ -66,6 +68,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ purchases: items })
   } catch (error) {
+    console.error('[API] merch purchases by-wallet error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   console.log('[DEBUG API] POST method not supported for enrollment debug');
   return NextResponse.json(
     { error: 'Method not allowed. Use GET instead.' },

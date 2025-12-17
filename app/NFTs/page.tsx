@@ -1,5 +1,5 @@
-'use client';
-import { useState, useRef } from 'react';
+"use client";
+import { useRef } from "react";
 import { featuredCollection, featuredAssets, upcoming } from './data';
 import CollectionHero from '@/components/marketplace/CollectionHero';
 import AssetGrid from '@/components/marketplace/AssetGrid';
@@ -9,18 +9,15 @@ import { Button } from '@/components/ui/button';
 import { ArrowDown, ShoppingBag } from 'lucide-react';
 
 export default function NFTsPage() {
-  const [activeSection, setActiveSection] = useState<'hero' | 'assets' | 'upcoming'>('hero');
   const assetsRef = useRef<HTMLDivElement>(null);
   const upcomingRef = useRef<HTMLDivElement>(null);
 
   const scrollToAssets = () => {
     assetsRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setActiveSection('assets');
   };
 
   const scrollToUpcoming = () => {
     upcomingRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setActiveSection('upcoming');
   };
 
   return (

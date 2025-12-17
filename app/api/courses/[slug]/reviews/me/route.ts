@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/auth-server'
-import { PublishStatus, LessonProgressStatus } from '@prisma/client'
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 
@@ -27,7 +26,8 @@ export async function GET(
     const review = await prisma.courseReview.findUnique({ where: { userid_courseid: { userid: user.id, courseid: course.id } } })
     if (!review) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ review })
-  } catch {
+  } catch (e) {
+    console.error('[API] reviews/me GET error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -61,10 +61,16 @@ export async function PATCH(
       create: { id: randomUUID(), userid: user.id, courseid: course.id, rating: rating ?? 5, comment },
     })
 
-    try { revalidatePath('/academy'); revalidatePath(`/academy/${slug}`) } catch {}
+    try {
+      revalidatePath('/academy')
+      revalidatePath(`/academy/${slug}`)
+    } catch (e) {
+      console.error('[API] reviews/me PATCH revalidate error:', e)
+    }
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (e) {
+    console.error('[API] reviews/me PATCH error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -85,9 +91,15 @@ export async function DELETE(
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     await prisma.courseReview.delete({ where: { userid_courseid: { userid: user.id, courseid: course.id } } })
-    try { revalidatePath('/academy'); revalidatePath(`/academy/${slug}`) } catch {}
+    try {
+      revalidatePath('/academy')
+      revalidatePath(`/academy/${slug}`)
+    } catch (e) {
+      console.error('[API] reviews/me DELETE revalidate error:', e)
+    }
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (e) {
+    console.error('[API] reviews/me DELETE error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

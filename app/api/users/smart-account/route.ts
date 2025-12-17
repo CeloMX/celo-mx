@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
           select: { id: true, walletAddress: true, smartAccount: true },
         });
         return NextResponse.json({ user: updated }, { status: 200 });
-      } catch (_) {
+      } catch (error) {
+        console.warn('Smart account update by userId failed, falling back to wallet path:', error);
         // continue to wallet-based path
       }
     }

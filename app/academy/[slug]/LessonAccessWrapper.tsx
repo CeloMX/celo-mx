@@ -1,7 +1,7 @@
 "use client";
 
+import React from "react";
 import { CoursePaywall } from "@/components/academy/CoursePaywall";
-import { useEffect, useState } from "react";
 import { useEnrollment, useHasAccess } from "@/lib/contexts/EnrollmentContext";
 
 interface LessonAccessWrapperProps {
@@ -13,33 +13,14 @@ export function LessonAccessWrapper({
   children,
   courseTitle,
 }: LessonAccessWrapperProps) {
-  const [mounted, setMounted] = useState(false);
   const enrollment = useEnrollment();
   const hasAccess = useHasAccess();
   
   console.log('[LESSON ACCESS WRAPPER] Component state:', {
-    mounted,
     isLoading: enrollment.isLoading,
     isWalletConnected: enrollment.isWalletConnected,
     hasAccess,
   });
-
-  // Handle hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // While hydrating, show loading state
-  if (!mounted) {
-    console.log('[LESSON ACCESS WRAPPER] Not mounted yet, showing loading');
-    return (
-      <CoursePaywall
-        courseTitle={courseTitle}
-        courseSlug=""
-        reason="LOADING"
-      />
-    );
-  }
 
   // If checking enrollment status
   if (enrollment.isLoading) {

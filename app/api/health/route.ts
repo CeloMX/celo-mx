@@ -13,7 +13,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const startTime = Date.now();
   const checks: Record<string, any> = {
     timestamp: new Date().toISOString(),
@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
+      console.error('Memory check failed:', error);
       checks.checks.memory = {
         status: 'error',
         error: 'Memory check failed',
@@ -130,11 +131,12 @@ export async function GET(request: NextRequest) {
 // ADDITIONAL HEALTH ENDPOINTS
 // =============================================================================
 
-export async function HEAD(request: NextRequest) {
+export async function HEAD() {
   // Simple HEAD request for basic uptime checks
   try {
     return new NextResponse(null, { status: 200 });
   } catch (error) {
+    console.error('Health HEAD check failed:', error);
     return new NextResponse(null, { status: 503 });
   }
 }

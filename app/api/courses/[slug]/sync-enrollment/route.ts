@@ -48,7 +48,9 @@ export async function POST(
     try {
       revalidatePath('/academy')
       revalidatePath(`/academy/${slug}`)
-    } catch {}
+    } catch (e) {
+      console.error('[API] sync-enrollment revalidate error:', e)
+    }
 
     return NextResponse.json({ success: true, count }, { status: 200 })
   } catch (error) {

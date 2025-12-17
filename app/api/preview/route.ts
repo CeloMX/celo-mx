@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
     const shot = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(target)}?w=1200&h=630`;
     return NextResponse.json({ imageUrl: shot, source: 'mshots' });
   } catch (e) {
+    console.error('[API] preview error:', e)
     const shot = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(target)}?w=1200&h=630`;
     return NextResponse.json({ imageUrl: shot, source: 'mshots' });
   }

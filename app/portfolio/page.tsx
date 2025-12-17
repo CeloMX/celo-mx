@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Send, Copy, Check, Wallet, RefreshCw, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Send, Copy, Check, Wallet, RefreshCw } from 'lucide-react';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';

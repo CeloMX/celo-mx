@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
           data: { walletAddress: wallet, updatedAt: new Date() },
           select: { id: true }
         })
-      } catch {}
+      } catch (e) {
+        console.error('[API] merch purchase wallet update error:', e)
+      }
     }
 
     const result = await prisma.$transaction(async (tx) => {

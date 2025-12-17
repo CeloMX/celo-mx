@@ -44,6 +44,7 @@ export async function GET(
     const canReview = completedCount === publishedIds.length
     return NextResponse.json({ canReview, reason: canReview ? undefined : 'NOT_COMPLETED' })
   } catch (e) {
+    console.error('[API] eligibility error:', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

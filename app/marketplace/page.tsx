@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingCart, Wallet, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Wallet, ExternalLink, RefreshCw } from 'lucide-react';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,7 +29,7 @@ type MerchItem = {
 function MarketplacePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { ready: privyReady, authenticated: privyAuth } = usePrivy();
+  const { ready: privyReady } = usePrivy();
   const smartAccount = useSmartAccount();
   const { smartAccountAddress, isSmartAccountReady } = smartAccount;
   // Fix: Convert null to undefined by using || undefined
@@ -94,7 +94,7 @@ function MarketplacePageInner() {
       }
     };
     resolveAndLoad();
-  }, [smartAccountAddress, userIdParam, wallet?.address]);
+  }, [smartAccountAddress, userIdParam, wallet?.address, resolvedUserId]);
 
   const isPurchased = (itemId: string) => !!purchases[itemId];
 

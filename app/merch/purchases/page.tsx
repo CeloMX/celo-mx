@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
-import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider'
 import { useAuth } from '@/hooks/useAuth'
 
 type PurchasedItem = {
@@ -20,7 +19,6 @@ type PurchasedItem = {
 }
 
 export default function PurchasesPage() {
-  const { smartAccountAddress, isSmartAccountReady } = useSmartAccount()
   const { isAuthenticated, wallet } = useAuth() as any
   const [items, setItems] = useState<PurchasedItem[]>([])
   const [loading, setLoading] = useState(true)

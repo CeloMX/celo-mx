@@ -98,7 +98,7 @@ export async function PUT(
     }
 
     // Update course with modules and lessons in a transaction
-    const updatedCourse = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       // Update the main course data
       const course = await tx.course.update({
         where: { id },

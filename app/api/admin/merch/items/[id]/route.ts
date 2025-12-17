@@ -13,6 +13,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const item = await prisma.merchItem.update({ where: { id }, data: body })
     return NextResponse.json({ item })
   } catch (error) {
+    console.error('[API] merch item PUT error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -27,6 +28,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const item = await prisma.merchItem.delete({ where: { id } })
     return NextResponse.json({ item })
   } catch (error) {
+    console.error('[API] merch item DELETE error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

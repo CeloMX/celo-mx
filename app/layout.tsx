@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import { Inter, Crimson_Pro } from 'next/font/google';
-import './globals.css';
-import Providers from '@/components/Providers';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { ContractDebug } from '@/components/debug/ContractDebug';
-import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import React from "react";
+import type { Metadata } from "next";
+import { Inter, Crimson_Pro } from "next/font/google";
+import "./globals.css";
+import Providers from "@/components/Providers";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
 const crimsonPro = Crimson_Pro({

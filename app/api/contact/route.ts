@@ -10,7 +10,8 @@ export async function POST(req: Request) {
     }
     return new Response('ok');
   } catch (e) {
-    // Silently succeed if table/model does not exist in this schema
+    // Silently succeed if table/model does not exist in this schema but log for debugging
+    console.warn('[API] contact route error (ignored):', e);
     return new Response('ok');
   }
 }

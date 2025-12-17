@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { BookOpen, Users, Settings, Home, Plus, List, LogOut, User, FileText } from 'lucide-react';
-import { useRequireAdmin } from '@/hooks/useAuth';
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { BookOpen, Users, Settings, Home, Plus, List, LogOut, FileText } from "lucide-react";
+import { useRequireAdmin } from "@/hooks/useAuth";
 
 const navigation = [
   { name: 'Overview', href: '/admin', icon: Home },
@@ -24,8 +24,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  
   // Always call the hook (React Hook rules)
   const authData = useRequireAdmin();
   const { user, wallet, logout } = authData;

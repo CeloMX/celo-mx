@@ -1,23 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Check, Play, Star, Users, Clock, Share2, Heart } from "lucide-react";
+import { Check, Play } from "lucide-react";
 import { CourseHeader } from "@/components/academy/CourseHeader";
 import { CourseCurriculum } from "@/components/academy/CourseCurriculum";
-import { EnrollPanel } from "@/components/academy/EnrollPanel";
-import CourseProgress from "@/components/academy/CourseProgress";
 import { Course } from "@/components/academy/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl, getYouTubeEmbedFromUrl, isYouTubeUrl } from "@/lib/youtube";
+import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedFromUrl } from "@/lib/youtube";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { EnrollmentProvider, useEnrollment } from '@/lib/contexts/EnrollmentContext';
 import { CourseProgressDashboard } from '@/components/academy/CourseProgressDashboard';
-import { CourseProgressProvider } from '@/lib/contexts/CourseProgressProvider';
 import { CourseReviews } from '@/components/academy/CourseReviews';
 import { useHasCompletedModule } from '@/lib/hooks/useModuleCompletion';
 import { getCourseTokenId } from '@/lib/courseToken';
@@ -43,17 +38,11 @@ interface CourseDetailClientProps {
 
 // Inner component that uses enrollment context
 function CourseDetailInner({ course }: CourseDetailClientProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const [learnersCount, setLearnersCount] = useState<number | null>(null);
   const [reviewStats, setReviewStats] = useState<{ average: number | null; count: number }>({ average: null, count: 0 });
   const enrollment = useEnrollment();
   const { user } = useAuth();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Fetch live enrollment count
   useEffect(() => {
@@ -64,7 +53,9 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
         if (!res.ok) return;
         const data = await res.json();
         if (!aborted && typeof data.count === 'number') setLearnersCount(data.count);
-      } catch {}
+      } catch (error) {
+        console.error('[COURSE DETAIL] Error loading enrollment count:', error);
+      }
     }
     loadCount();
     return () => { aborted = true };
@@ -82,7 +73,9 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
         if (!aborted) {
           setReviewStats({ average: data.average, count: data.count });
         }
-      } catch {}
+      } catch (error) {
+        console.error('[COURSE DETAIL] Error loading reviews:', error);
+      }
     }
     loadReviews();
     return () => { aborted = true };
@@ -161,28 +154,6 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
     hasCompletedOnChain,
     user: user ? 'authenticated' : 'not authenticated',
   });
-
-  // Fallback enrollment handler for when Web3 isn't available
-  const handleFallbackEnroll = (course: Course) => {
-    console.log("Enrolling in course:", course.title);
-    alert("¡La función de inscripción estará disponible pronto! Se integrará con la wallet Privy y rampas de pago.");
-  };
-
-  const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: course.title,
-        text: course.subtitle,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -414,17 +385,13 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24 space-y-6">
-              <CourseProgressDashboard 
+              <CourseProgressDashboard
                 courseSlug={course.slug}
                 courseId={course.id}
                 courseTitle={course.title}
                 modules={course.modules}
               />
-              {isMounted ? (
-                <Web3EnrollPanel course={courseWithCount} />
-              ) : (
-                <EnrollPanel course={courseWithCount} onEnroll={handleFallbackEnroll} />
-              )}
+              <Web3EnrollPanel course={courseWithCount} />
             </div>
           </div>
         </div>

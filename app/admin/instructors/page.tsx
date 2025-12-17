@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import React from "react";
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, Users } from "lucide-react";
 
 interface Instructor {
   id: string;

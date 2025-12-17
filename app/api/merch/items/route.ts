@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { merchItems as FALLBACK_ITEMS } from '@/config/merch'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const items = await prisma.merchItem.findMany({
       select: {
@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     })
     return NextResponse.json({ items })
   } catch (error) {
+    console.error('[API] public merch items GET error:', error)
     const items = (FALLBACK_ITEMS || []).map((it) => ({
       ...it,
       stock: typeof (it as any).stock === 'number' ? (it as any).stock : 0,

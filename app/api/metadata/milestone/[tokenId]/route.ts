@@ -239,10 +239,7 @@ export async function GET(
 }
 
 // Also handle POST requests for dynamic metadata updates (optional)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ tokenId: string }> }
-) {
+export async function POST() {
   // This could be used for updating metadata dynamically
   // For now, return method not allowed
   return NextResponse.json(

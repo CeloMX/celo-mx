@@ -22,23 +22,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const body = await request.json()
-    const { id, name, description, price, image, category, sizes, stock } = body as {
+    const { id, name, description, price, image, images, video, category, sizes, stock, tag } = body as {
       id: string
       name: string
       description?: string
       price: number
       image: string
+      images?: string[]
+      video?: string | null
       category: string
       sizes?: string[]
       stock?: number
+      tag?: string | null
     }
     if (!id || !name || !price || !image || !category) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
     const item = await prisma.merchItem.upsert({
       where: { id },
-      update: { name, description: description || null, price, image, category, sizes: sizes || [], stock: stock ?? 0 },
-      create: { id, name, description: description || null, price, image, category, sizes: sizes || [], stock: stock ?? 0 }
+      update: { 
+        name, 
+        description: description || null, 
+        price, 
+        image, 
+        images: images || [], 
+        video: video || null,
+        category, 
+        sizes: sizes || [], 
+        stock: stock ?? 0, 
+        tag: tag || null 
+      },
+      create: { 
+        id, 
+        name, 
+        description: description || null, 
+        price, 
+        image, 
+        images: images || [], 
+        video: video || null,
+        category, 
+        sizes: sizes || [], 
+        stock: stock ?? 0, 
+        tag: tag || null 
+      }
     })
     return NextResponse.json({ item })
   } catch (error) {

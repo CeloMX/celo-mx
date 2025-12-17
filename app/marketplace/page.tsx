@@ -319,6 +319,15 @@ function MarketplacePageInner() {
     );
   }
 
+  // Separar Axolote/Navidad del resto, sin cambiar el diseño de las tarjetas.
+  const isNavidadAxolote = (item: MerchItem) =>
+    /navidad/i.test(item.tag || '') ||
+    /axolote/i.test(item.name || '') ||
+    /axolote/i.test(item.id || '');
+
+  const navidadItems = items.filter(isNavidadAxolote);
+  const gatherItems = items.filter((item) => !isNavidadAxolote(item));
+
   return (
     <div className="min-h-screen bg-celo-bg">
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -336,7 +345,7 @@ function MarketplacePageInner() {
           </div>
           <button
             onClick={() => router.push('/marketplace/purchases')}
-            className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40"
           >
             Mis Compras
           </button>
@@ -372,7 +381,7 @@ function MarketplacePageInner() {
                     alert(`Error faucet: ${e?.message || 'desconocido'}`);
                   }
                 }}
-                className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+                className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40"
               >
                 Obtener CMT del Faucet
               </button>
@@ -380,16 +389,104 @@ function MarketplacePageInner() {
           </div>
         )}
 
-        {/* Title Section */}
+        {/* Sección 1: Axolote Navideño (más reciente) */}
+        {navidadItems.length > 0 && (
+          <>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-celo-fg">
+                Axolote Navideño · Edición Especial collab con Mocre
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-12">
+              {navidadItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white dark:bg-black/50 border border-celo-border rounded-2xl overflow-hidden hover:border-celo-yellow transition relative"
+                >
+                  {isPurchased(item.id) && (
+                    <div className="absolute top-4 right-4 z-10 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      ✓ Comprado
+                    </div>
+                  )}
+                  {item.stock <= 0 && (
+                    <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      Agotado
+                    </div>
+                  )}
+                  <div className="aspect-square bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center relative">
+                    {item.tag ? (
+                      <span className={`absolute ${isPurchased(item.id) ? 'top-2 left-2' : 'top-2 right-2'} z-10 px-2 py-1 rounded-lg bg-celoLegacy-yellow text-black text-xs font-semibold shadow`}>
+                        {item.tag}
+                      </span>
+                    ) : null}
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-celo-fg mb-2">{item.name}</h3>
+                    <p className="text-celo-muted text-sm mb-4">{item.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold text-celo-fg">
+                        {item.price} <span className="text-lg text-celo-yellow">CMT</span>
+                      </div>
+                      {isPurchased(item.id) ? (
+                        <a
+                          href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-6 py-2 bg-green-500/20 text-green-600 dark:text-green-400 font-semibold rounded-xl hover:bg-green-500/30 transition"
+                        >
+                          Ver TX <ExternalLink className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => handlePurchase(item)}
+                          disabled={purchasingItem === item.id || item.stock <= 0}
+                          className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed border border-celo-border/40"
+                        >
+                          {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="mt-2 text-sm">
+                      <span className={item.stock > 0 ? 'text-celo-muted' : 'text-red-500'}>
+                        {item.stock > 0 ? `Quedan ${item.stock}` : 'Sin stock'}
+                      </span>
+                    </div>
+                    {item.sizes && item.sizes.length && !(/shirt/i.test(item.id) || /shirt/i.test(item.name)) ? (
+                      <div className="mt-4">
+                        <select
+                          value={selectedSizes[item.id] || ''}
+                          onChange={(e) => setSelectedSizes((s) => ({ ...s, [item.id]: e.target.value }))}
+                          className="w-full px-3 py-2 border border-celo-border rounded-xl bg-transparent"
+                        >
+                          <option value="">Selecciona talla</option>
+                          {item.sizes.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Sección 2: Celo Gather Argentina 2025 */}
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-celo-fg">
             Activación IRL Merch de Celo Gather Buenos Aires, Argentina 2025.
           </h2>
         </div>
 
-        {/* Merch Grid */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {items.map((item) => (
+          {gatherItems.map((item) => (
             <div
               key={item.id}
               className="bg-white dark:bg-black/50 border border-celo-border rounded-2xl overflow-hidden hover:border-celo-yellow transition relative"
@@ -423,7 +520,7 @@ function MarketplacePageInner() {
                     <div className="text-2xl font-bold text-celo-fg">
                       {item.price} <span className="text-lg text-celo-yellow">CMT</span>
                     </div>
-                  {isPurchased(item.id) ? (
+                    {isPurchased(item.id) ? (
                     <a
                       href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
                       target="_blank"
@@ -432,12 +529,12 @@ function MarketplacePageInner() {
                     >
                       Ver TX <ExternalLink className="w-4 h-4" />
                     </a>
-                  ) : (
-                    <button
-                      onClick={() => handlePurchase(item)}
-                      disabled={purchasingItem === item.id || item.stock <= 0}
-                      className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                      ) : (
+                        <button
+                          onClick={() => handlePurchase(item)}
+                          disabled={purchasingItem === item.id || item.stock <= 0}
+                          className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed border border-celo-border/40"
+                        >
                       {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
                     </button>
                   )}
@@ -464,39 +561,6 @@ function MarketplacePageInner() {
                 </div>
               </div>
           ))}
-        </div>
-
-        {/* Coming Soon Section */}
-        <div className="mt-12 mb-8">
-          <div className="bg-white dark:bg-black/50 border-2 border-dashed border-celo-border rounded-2xl overflow-hidden opacity-75">
-            <div className="aspect-square bg-gradient-to-br from-celo-yellow/10 to-celo-yellow/5 flex items-center justify-center relative">
-              <div className="text-center p-8">
-                <div className="text-6xl mb-4">🎄</div>
-                <p className="text-celo-muted text-sm">Imagen próximamente</p>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 rounded-full bg-celo-yellow/20 text-celo-yellow text-xs font-semibold">
-                  Próximamente!
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-celo-fg mb-2">
-                Canva edición especial Axolote Navideño Colaboración especial. 
-              </h3>
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-2xl font-bold text-celo-fg">
-                  6000 <span className="text-lg text-celo-yellow">CELO</span>
-                </div>
-                <button
-                  disabled
-                  className="px-6 py-2 bg-celo-border text-celo-muted font-semibold rounded-xl cursor-not-allowed opacity-50"
-                >
-                  Próximamente
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
       </div>

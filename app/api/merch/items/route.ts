@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
         description: true,
         price: true,
         image: true,
+        images: true,
+        video: true,
         category: true,
         sizes: true,
         tag: true,

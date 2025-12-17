@@ -90,3 +90,4 @@ export const upcoming: UpcomingCollection[] = [
   { name: "Colección #4", eta: "Próximamente", disabled: true },
   { name: "Colección #5", eta: "Próximamente", disabled: true },
 ];
+

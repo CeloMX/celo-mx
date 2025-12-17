@@ -13,6 +13,8 @@ const navigation = [
   { name: 'Instructors', href: '/admin/instructors', icon: Users },
   { name: 'Smart Accounts', href: '/admin/smart-accounts', icon: List },
   { name: 'Registro de Proyectos', href: '/admin/registrodeproyectos', icon: FileText },
+  { name: 'Añadir Merch', href: '/admin/merch', icon: Plus },
+  { name: 'Inventario', href: '/admin/merch/inventory', icon: List },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { wagmiConfig } from '@/lib/wagmi';
 import { ZeroDevSmartWalletProvider } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { AuthCookieSync } from '@/components/AuthCookieSync';
+import { NetworkChecker } from '@/components/NetworkChecker';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -46,6 +47,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <WagmiProvider config={wagmiConfig}>
           <ZeroDevSmartWalletProvider zeroDevProjectId={zeroDevProjectId}>
             <ToastProvider>
+              <NetworkChecker />
               {children}
             </ToastProvider>
           </ZeroDevSmartWalletProvider>

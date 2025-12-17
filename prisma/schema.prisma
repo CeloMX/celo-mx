@@ -244,6 +244,22 @@ model Purchase {
   updatedat       DateTime  @default(now()) @db.Timestamptz(6)
   MerchItem       MerchItem @relation(fields: [itemid], references: [id], map: "purchase_item_fkey")
   User            User      @relation(fields: [userid], references: [id], map: "purchase_user_fkey")
+  ShippingInfo    ShippingInfo?
+}
+
+model ShippingInfo {
+  id            String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  purchaseId    String   @unique
+  firstName     String
+  lastName      String
+  email         String
+  address       String
+  addressLine2  String?
+  postalCode    String
+  city          String
+  phone         String
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  Purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 }
 
 enum LessonProgressStatus {

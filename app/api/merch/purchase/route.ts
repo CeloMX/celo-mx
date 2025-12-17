@@ -10,9 +10,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { itemId, txHash, amount, selectedSize, smartAccount, userId: userIdRaw } = body as { itemId: string; txHash: string; amount: number; selectedSize?: string; smartAccount?: string; userId?: string }
+    const { itemId, txHash, amount, selectedSize, smartAccount, userId: userIdRaw, shippingData } = body as { 
+      itemId: string; 
+      txHash: string; 
+      amount: number; 
+      selectedSize?: string; 
+      smartAccount?: string; 
+      userId?: string;
+      shippingData?: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        address: string;
+        addressLine2?: string;
+        postalCode: string;
+        city: string;
+        phone: string;
+      };
+    }
     const smart = smartAccount?.toLowerCase().trim()
-    if (!itemId || !txHash || !amount) {
+    // Validate required fields (allow amount = 0 for testing)
+    if (!itemId || !txHash || (amount === undefined || amount === null)) {
+      console.error('[API] Missing required fields:', { itemId: !!itemId, txHash: !!txHash, amount });
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
@@ -120,18 +139,83 @@ export async function POST(request: NextRequest) {
           selectedsize: selectedSize || null,
         }
       })
+
+      // Store shipping data if provided
+      // Note: ShippingInfo table may not exist yet - we'll log it but not fail the purchase
+      if (shippingData) {
+        try {
+          // Try to use Prisma model if it exists
+          if ((tx as any).shippingInfo) {
+            await (tx as any).shippingInfo.create({
+              data: {
+                purchaseId: purchase.id,
+                firstName: shippingData.firstName,
+                lastName: shippingData.lastName,
+                email: shippingData.email,
+                address: shippingData.address,
+                addressLine2: shippingData.addressLine2 || null,
+                postalCode: shippingData.postalCode,
+                city: shippingData.city,
+                phone: shippingData.phone,
+              }
+            });
+          } else {
+            // Fallback to raw SQL if model doesn't exist
+            await (tx as any).$executeRaw`
+              INSERT INTO "ShippingInfo" (
+                "id", "purchaseId", "firstName", "lastName", "email", "address", 
+                "addressLine2", "postalCode", "city", "phone", "createdAt"
+              ) VALUES (
+                gen_random_uuid()::text,
+                ${purchase.id},
+                ${shippingData.firstName},
+                ${shippingData.lastName},
+                ${shippingData.email},
+                ${shippingData.address},
+                ${shippingData.addressLine2 || null},
+                ${shippingData.postalCode},
+                ${shippingData.city},
+                ${shippingData.phone},
+                NOW()
+              )
+            `;
+          }
+          console.log('[PURCHASE] Shipping info saved successfully');
+        } catch (e: any) {
+          // If table doesn't exist yet, log for manual processing but don't fail
+          // Run: npx prisma migrate dev --name add_shipping_info
+          console.error('[PURCHASE] Could not save shipping info (table may not exist):', e?.message);
+          console.log('[PURCHASE] Shipping data for manual entry:', {
+            purchaseId: purchase.id,
+            txHash: txHash,
+            shippingData,
+          });
+          // Don't throw - allow purchase to complete even if shipping info fails
+        }
+      }
       const refreshedItem = await tx.merchItem.findUnique({ where: { id: itemId }, select: { id: true, stock: true } })
       return { purchase, item: refreshedItem }
     })
 
     return NextResponse.json({ purchase: result.purchase, item: result.item, userId })
   } catch (error: any) {
+    console.error('[API] Purchase error:', error);
+    console.error('[API] Error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
+    
     if (typeof error?.message === 'string' && error.message.includes('Out of stock')) {
       return NextResponse.json({ error: 'Out of stock' }, { status: 409 })
     }
     if (error?.code === 'P2002') {
       return NextResponse.json({ error: 'Duplicate transaction' }, { status: 409 })
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    
+    // Return more detailed error message for debugging
+    const errorMessage = error?.message || 'Internal server error';
+    console.error('[API] Returning error:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

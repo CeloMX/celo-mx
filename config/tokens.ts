@@ -41,6 +41,14 @@ export const tokens: Token[] = [
     logo: "https://raw.githubusercontent.com/ubeswap/default-token-list/master/assets/asset_cREAL.png",
     isStablecoin: false,
   },
+  {
+    symbol: "USDT",
+    name: "Tether USD",
+    address: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+    decimals: 6,
+    logo: "https://raw.githubusercontent.com/ubeswap/default-token-list/master/assets/asset_USDT.png",
+    isStablecoin: true,
+  },
 ];
 
 export default { tokens };

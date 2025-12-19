@@ -12,6 +12,7 @@ import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
 import { CMT_FAUCET_ABI, getCmtFaucetAddress } from '@/lib/contracts/cmtFaucet';
 import { encodeFunctionData } from 'viem';
 import Image from 'next/image';
+import type { Route } from 'next';
 
 type MerchItem = {
   id: string;
@@ -314,6 +315,19 @@ function MarketplacePageInner() {
           <p className="text-xs text-celo-muted">
             Esto puede tomar unos segundos la primera vez...
           </p>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={smartAccount.forceReconnect}
+              className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            >
+              Reconectar sesión
+            </button>
+          </div>
+          {smartAccount.degradedMode && (
+            <p className="mt-3 text-xs text-celo-muted">
+              Modo fallback activo. Intentando recuperar sesión.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -335,7 +349,7 @@ function MarketplacePageInner() {
             <p className="text-celo-muted mt-1">Compra con CMT · Transacciones sin gas</p>
           </div>
           <button
-            onClick={() => router.push('/marketplace/purchases')}
+            onClick={() => router.push('/marketplace/purchases' as Route)}
             className="px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
           >
             Mis Compras

@@ -7,9 +7,33 @@ import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
-import { MERCHANT_ADDRESS } from '@/config/merch';
+import { MERCHANT_ADDRESS, shouldUseFeeSplit, PAYMENT_SPLITTER_ADDRESS } from '@/config/merch';
+
+/**
+ * Get the price for an item
+ * Axolote navideño uses 45 USDT (only USDT option)
+ * Other items use their database price
+ * @param _paymentMethod - Payment method (kept for API consistency, not used internally)
+ */
+// eslint-disable-next-line no-unused-vars
+const getItemPrice = (item: MerchItem, _paymentMethod: 'CMT' | 'USDT'): number => {
+  const isAxolote = shouldUseFeeSplit(item.id, item.tag);
+  if (isAxolote) {
+    return 45; // Precio fijo de 45 USDT para el axolote navideño
+  }
+  // Para otros artículos, usar el precio de la base de datos
+  return item.price;
+};
+
+/**
+ * Check if item should only show USDT (axolote navideño)
+ */
+const isUSDTOnly = (item: MerchItem): boolean => {
+  return shouldUseFeeSplit(item.id, item.tag);
+};
 import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
 import { USDT_TOKEN_CONFIG, usdtToSmallestUnit } from '@/lib/contracts/usdt';
+import { encodeSplitPayment } from '@/lib/contracts/paymentSplitter';
 import { CMT_FAUCET_ABI, getCmtFaucetAddress } from '@/lib/contracts/cmtFaucet';
 import { encodeFunctionData } from 'viem';
 import Modal from '@/components/Modal';
@@ -155,7 +179,7 @@ function MarketplacePageInner() {
       return;
     }
     
-    if (isPurchased(item.id)) return;
+    // Permitir compras múltiples - eliminado: if (isPurchased(item.id)) return;
     if (item.sizes && item.sizes.length) {
       let chosen = selectedSizes[item.id];
       if (!chosen) {
@@ -175,14 +199,12 @@ function MarketplacePageInner() {
       return;
     }
 
-    // Get selected payment method (default to CMT if not selected)
-    const paymentMethod = selectedPaymentMethod[item.id] || 'CMT';
+    // For axolote, only USDT is allowed. For others, use selected method or default to CMT
+    const isAxolote = isUSDTOnly(item);
+    const paymentMethod = isAxolote ? 'USDT' : (selectedPaymentMethod[item.id] || 'CMT');
     
-    // Precios: 1 CMT or 1 USDT (para pruebas)
-    const priceInCMT = 1;
-    const priceInUSDT = 1;
-    
-    const price = paymentMethod === 'CMT' ? priceInCMT : priceInUSDT;
+    // Get price: 45 USDT for axolote, database price for others
+    const price = getItemPrice(item, paymentMethod);
     const tokenBalance = paymentMethod === 'CMT' ? cmtBalance : usdtBalance;
     const tokenSymbol = paymentMethod;
 
@@ -209,14 +231,12 @@ function MarketplacePageInner() {
     setShippingForm({ isOpen: false, item: null });
     setPurchasingItem(item.id);
 
-    // Get selected payment method (default to CMT if not selected)
-    const paymentMethod = selectedPaymentMethod[item.id] || 'CMT';
+    // For axolote, only USDT is allowed. For others, use selected method or default to CMT
+    const isAxolote = isUSDTOnly(item);
+    const paymentMethod = isAxolote ? 'USDT' : (selectedPaymentMethod[item.id] || 'CMT');
     
-    // Precios: 1 CMT or 1 USDT (para pruebas)
-    const priceInCMT = 1;
-    const priceInUSDT = 1;
-    
-    const price = paymentMethod === 'CMT' ? priceInCMT : priceInUSDT;
+    // Get price: 45 USDT for axolote, database price for others
+    const price = getItemPrice(item, paymentMethod);
     const tokenConfig = paymentMethod === 'CMT' ? CMT_TOKEN_CONFIG : USDT_TOKEN_CONFIG;
     const tokenSymbol = paymentMethod;
 
@@ -237,22 +257,76 @@ function MarketplacePageInner() {
         : usdtToSmallestUnit(price);
       console.log(`[MERCH] Amount in smallest unit:`, amountInSmallestUnit.toString());
       
-      // Encode the ERC20 transfer function call
-      const transferData = encodeFunctionData({
-        abi: ERC20_ABI,
-        functionName: 'transfer',
-        args: [MERCHANT_ADDRESS as `0x${string}`, amountInSmallestUnit],
-      });
-
-      console.log(`[MERCH] Executing sponsored ${tokenSymbol} transfer via ZeroDev...`);
-      console.log('[MERCH] Transfer data:', transferData);
+      // Check if this item should use fee splitting
+      const useFeeSplit = shouldUseFeeSplit(item.id, item.tag);
+      const splitterAddress = PAYMENT_SPLITTER_ADDRESS as `0x${string}` | null;
       
-      // Execute the transfer using ZeroDev sponsored transaction
-      const txHash = await smartAccount.executeTransaction({
-        to: tokenConfig.address,
-        data: transferData,
-        value: 0n, // No ETH value needed for ERC20 transfer
-      });
+      let txHash: string | null = null;
+      
+      if (useFeeSplit && splitterAddress) {
+        // Use payment splitter: 24% to treasury, 76% to artist
+        console.log(`[MERCH] Using payment splitter for ${item.name}:`, {
+          splitterAddress,
+          totalAmount: amountInSmallestUnit.toString(),
+          treasuryShare: '$10 (22.22%)',
+          artistShare: '$35 (77.78%)',
+        });
+        
+        // First, approve the splitter contract to spend tokens
+        const approveData = encodeFunctionData({
+          abi: ERC20_ABI as any,
+          functionName: 'approve',
+          args: [splitterAddress, amountInSmallestUnit],
+        });
+        
+        console.log('[MERCH] Approving splitter contract...');
+        const approveTxHash = await smartAccount.executeTransaction({
+          to: tokenConfig.address,
+          data: approveData,
+          value: 0n,
+        });
+        
+        if (!approveTxHash) {
+          throw new Error('Approval transaction failed');
+        }
+        
+        console.log('[MERCH] Approval completed:', approveTxHash);
+        
+        // Wait a moment for approval to be processed
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Now call splitPayment on the splitter contract
+        const splitData = encodeSplitPayment(tokenConfig.address, amountInSmallestUnit);
+        
+        console.log('[MERCH] Executing split payment...');
+        txHash = await smartAccount.executeTransaction({
+          to: splitterAddress,
+          data: splitData,
+          value: 0n,
+        });
+        
+        console.log(`[MERCH] ✅ Payment split completed:`, txHash);
+      } else {
+        // Direct transfer to merchant (existing behavior)
+        console.log(`[MERCH] Using direct transfer to merchant for ${item.name}`);
+        
+        // Encode the ERC20 transfer function call
+        const transferData = encodeFunctionData({
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [MERCHANT_ADDRESS as `0x${string}`, amountInSmallestUnit],
+        });
+
+        console.log(`[MERCH] Executing sponsored ${tokenSymbol} transfer via ZeroDev...`);
+        console.log('[MERCH] Transfer data:', transferData);
+        
+        // Execute the transfer using ZeroDev sponsored transaction
+        txHash = await smartAccount.executeTransaction({
+          to: tokenConfig.address,
+          data: transferData,
+          value: 0n, // No ETH value needed for ERC20 transfer
+        });
+      }
 
       if (!txHash) {
         throw new Error('Transaction failed - no hash returned');
@@ -410,6 +484,19 @@ function MarketplacePageInner() {
           <p className="text-xs text-celo-muted">
             Esto puede tomar unos segundos la primera vez...
           </p>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={smartAccount.forceReconnect}
+              className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            >
+              Reconectar sesión
+            </button>
+          </div>
+          {smartAccount.degradedMode && (
+            <p className="mt-3 text-xs text-celo-muted">
+              Modo fallback activo. Intentando recuperar sesión.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -535,8 +622,8 @@ function MarketplacePageInner() {
                     <h3 className="text-xl font-bold text-celo-fg mb-2">{item.name}</h3>
                     <p className="text-celo-muted text-sm mb-4">{item.description}</p>
                     
-                    {/* Payment Method Selector */}
-                    {!isPurchased(item.id) && (
+                    {/* Payment Method Selector - Only show for non-axolote items */}
+                    {!isPurchased(item.id) && !isUSDTOnly(item) && (
                       <div className="mb-4">
                         <label className="block text-sm font-medium text-celo-muted mb-2">
                           Método de pago
@@ -550,7 +637,7 @@ function MarketplacePageInner() {
                                 : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
                             }`}
                           >
-                            1 CMT
+                            {getItemPrice(item, 'CMT')} CMT
                           </button>
                           <button
                             onClick={() => setSelectedPaymentMethod((s) => ({ ...s, [item.id]: 'USDT' }))}
@@ -560,7 +647,7 @@ function MarketplacePageInner() {
                                 : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
                             }`}
                           >
-                            1 USDT
+                            {getItemPrice(item, 'USDT')} USDT
                           </button>
                         </div>
                       </div>
@@ -569,44 +656,47 @@ function MarketplacePageInner() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-celo-fg">
-                          {isPurchased(item.id) ? (
-                            <>
-                              {item.price} <span className="text-lg text-celo-yellow">CMT</span>
-                            </>
-                          ) : (
-                            <>
-                              {(selectedPaymentMethod[item.id] || 'CMT') === 'CMT' ? (
-                                <>1 <span className="text-lg text-celo-yellow">CMT</span></>
-                              ) : (
-                                <>1 <span className="text-lg text-green-500">USDT</span></>
-                              )}
-                            </>
-                          )}
+                          {(() => {
+                            const isAxolote = isUSDTOnly(item);
+                            const paymentMethod = isAxolote ? 'USDT' : (selectedPaymentMethod[item.id] || 'CMT');
+                            const price = getItemPrice(item, paymentMethod);
+                            return (
+                              <>
+                                {price} <span className={`text-lg ${paymentMethod === 'CMT' ? 'text-celo-yellow' : 'text-green-500'}`}>{paymentMethod}</span>
+                              </>
+                            );
+                          })()}
                         </div>
-                        {!isPurchased(item.id) && (
+                        {!isPurchased(item.id) && !isUSDTOnly(item) && (
                           <div className="text-xs text-celo-muted mt-1">
-                            o {(selectedPaymentMethod[item.id] || 'CMT') === 'CMT' ? '1 USDT' : '1 CMT'}
+                            {(() => {
+                              const paymentMethod = selectedPaymentMethod[item.id] || 'CMT';
+                              const price = getItemPrice(item, paymentMethod);
+                              const altMethod = paymentMethod === 'CMT' ? 'USDT' : 'CMT';
+                              return `o ${price} ${altMethod}`;
+                            })()}
                           </div>
                         )}
                       </div>
-                      {isPurchased(item.id) ? (
-                        <a
-                          href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-6 py-2 bg-green-500/20 text-green-600 dark:text-green-400 font-semibold rounded-xl hover:bg-green-500/30 transition"
-                        >
-                          Ver TX <ExternalLink className="w-4 h-4" />
-                        </a>
-                      ) : (
+                      <div className="flex gap-2">
+                        {isPurchased(item.id) && (
+                          <a
+                            href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-600 dark:text-green-400 font-semibold rounded-xl hover:bg-green-500/30 transition"
+                          >
+                            Ver TX <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
                         <button
                           onClick={() => handlePurchase(item)}
                           disabled={purchasingItem === item.id || item.stock <= 0}
                           className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed border border-celo-border/40"
                         >
-                          {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
+                          {purchasingItem === item.id ? 'Comprando...' : isPurchased(item.id) ? 'Comprar de nuevo' : 'Comprar'}
                         </button>
-                      )}
+                      </div>
                     </div>
                     <div className="mt-2 text-sm">
                       <span className={item.stock > 0 ? 'text-celo-muted' : 'text-red-500'}>
@@ -673,8 +763,8 @@ function MarketplacePageInner() {
                   <h3 className="text-xl font-bold text-celo-fg mb-2">{item.name}</h3>
                   <p className="text-celo-muted text-sm mb-4">{item.description}</p>
                   
-                  {/* Payment Method Selector */}
-                  {!isPurchased(item.id) && (
+                  {/* Payment Method Selector - Only show for non-axolote items */}
+                  {!isPurchased(item.id) && !isUSDTOnly(item) && (
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-celo-muted mb-2">
                         Método de pago
@@ -688,7 +778,7 @@ function MarketplacePageInner() {
                               : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
                           }`}
                         >
-                          1 CMT
+                          {getItemPrice(item, 'CMT')} CMT
                         </button>
                         <button
                           onClick={() => setSelectedPaymentMethod((s) => ({ ...s, [item.id]: 'USDT' }))}
@@ -698,7 +788,7 @@ function MarketplacePageInner() {
                               : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
                           }`}
                         >
-                          1 USDT
+                          {getItemPrice(item, 'USDT')} USDT
                         </button>
                       </div>
                     </div>
@@ -727,24 +817,25 @@ function MarketplacePageInner() {
                         </div>
                       )}
                     </div>
-                    {isPurchased(item.id) ? (
-                    <a
-                      href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-6 py-2 bg-green-500/20 text-green-600 dark:text-green-400 font-semibold rounded-xl hover:bg-green-500/30 transition"
-                    >
-                      Ver TX <ExternalLink className="w-4 h-4" />
-                    </a>
-                      ) : (
-                        <button
-                          onClick={() => handlePurchase(item)}
-                          disabled={purchasingItem === item.id || item.stock <= 0}
-                          className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed border border-celo-border/40"
+                    <div className="flex gap-2">
+                      {isPurchased(item.id) && (
+                        <a
+                          href={`https://celoscan.io/tx/${purchases[item.id].txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-600 dark:text-green-400 font-semibold rounded-xl hover:bg-green-500/30 transition"
                         >
-                      {purchasingItem === item.id ? 'Comprando...' : 'Comprar'}
-                    </button>
-                  )}
+                          Ver TX <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handlePurchase(item)}
+                        disabled={purchasingItem === item.id || item.stock <= 0}
+                        className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed border border-celo-border/40"
+                      >
+                        {purchasingItem === item.id ? 'Comprando...' : isPurchased(item.id) ? 'Comprar de nuevo' : 'Comprar'}
+                      </button>
+                    </div>
                   </div>
                   <div className="mt-2 text-sm">
                     <span className={item.stock > 0 ? 'text-celo-muted' : 'text-red-500'}>
@@ -779,19 +870,53 @@ function MarketplacePageInner() {
         title={modal.title}
         type={modal.type}
       >
-        <div>{modal.message}</div>
-        {modal.type === 'success' && modal.message.includes('celoscan.io') && (
-          <div className="mt-4">
-            <a
-              href={modal.message.match(/https:\/\/celoscan\.io\/tx\/[a-fA-F0-9]+/)?.[0] || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40"
-            >
-              Ver en Celoscan <ExternalLink className="w-4 h-4" />
-            </a>
+        <div className="space-y-4">
+          {/* Main message */}
+          <div className="text-base leading-relaxed">
+            {modal.message.split('\n\n').map((line, index) => {
+              // Extract transaction hash and Celoscan URL
+              const txHashMatch = line.match(/0x[a-fA-F0-9]+/);
+              const celoscanMatch = line.match(/https:\/\/celoscan\.io\/tx\/[a-fA-F0-9]+/);
+              
+              if (celoscanMatch) {
+                // This line contains the Celoscan URL - we'll show it as a button below
+                return null;
+              }
+              
+              if (txHashMatch && !line.includes('https://')) {
+                // This line contains just the transaction hash
+                return (
+                  <div key={index} className="mt-2">
+                    <span className="font-semibold">Transacción:</span>
+                    <div className="mt-1 font-mono text-sm break-all bg-celo-bg/50 p-2 rounded border border-celo-border/30">
+                      {txHashMatch[0]}
+                    </div>
+                  </div>
+                );
+              }
+              
+              return (
+                <p key={index} className={index === 0 ? 'font-semibold' : ''}>
+                  {line}
+                </p>
+              );
+            }).filter(Boolean)}
           </div>
-        )}
+          
+          {/* Celoscan button */}
+          {modal.type === 'success' && modal.message.includes('celoscan.io') && (
+            <div className="pt-2 border-t border-celo-border/30">
+              <a
+                href={modal.message.match(/https:\/\/celoscan\.io\/tx\/[a-fA-F0-9]+/)?.[0] || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40 w-full justify-center"
+              >
+                Ver en Celoscan <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          )}
+        </div>
       </Modal>
 
       {/* Shipping Form */}

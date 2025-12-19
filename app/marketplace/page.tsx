@@ -410,6 +410,19 @@ function MarketplacePageInner() {
           <p className="text-xs text-celo-muted">
             Esto puede tomar unos segundos la primera vez...
           </p>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={smartAccount.forceReconnect}
+              className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition"
+            >
+              Reconectar sesión
+            </button>
+          </div>
+          {smartAccount.degradedMode && (
+            <p className="mt-3 text-xs text-celo-muted">
+              Modo fallback activo. Intentando recuperar sesión.
+            </p>
+          )}
         </div>
       </div>
     );

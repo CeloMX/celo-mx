@@ -25,6 +25,8 @@ type SmartWalletContextType = {
   canSponsorTransaction: boolean;
   error: string | null; // Changed to string for React compatibility
   isLoading: boolean; // Added for compatibility
+  degradedMode: boolean;
+  forceReconnect: () => Promise<void>;
   executeTransaction: (params: {
     to: `0x${string}`;
     data: `0x${string}`;
@@ -41,6 +43,8 @@ const SmartWalletContext = createContext<SmartWalletContextType>({
   canSponsorTransaction: false,
   error: null,
   isLoading: false,
+  degradedMode: false,
+  forceReconnect: async () => {},
   executeTransaction: async () => null,
 });
 
@@ -53,7 +57,7 @@ export const ZeroDevSmartWalletProvider = ({
 }) => {
   console.log('[ZERODEV] Provider initialized with project ID:', zeroDevProjectId);
   const { wallets } = useWallets();
-  const { authenticated, ready: privyReady } = usePrivy();
+  const { authenticated, ready: privyReady, login, logout } = usePrivy();
   const [kernelClient, setKernelClient] = useState<any>(null);
   const [smartAccountAddress, setSmartAccountAddress] = useState<
     `0x${string}` | null
@@ -62,6 +66,8 @@ export const ZeroDevSmartWalletProvider = ({
   const [error, setError] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
+  const [degradedMode, setDegradedMode] = useState(false);
+  const [fallbackTimerStarted, setFallbackTimerStarted] = useState(false);
   
   console.log('[ZERODEV] Using FORCED mainnet chain:', FORCED_CHAIN.name, 'ID:', FORCED_CHAIN.id);
 
@@ -95,6 +101,24 @@ export const ZeroDevSmartWalletProvider = ({
       console.error('[ZERODEV] Transaction failed:', error);
       throw error;
     }
+  };
+
+  const forceReconnect = async () => {
+    try {
+      await logout();
+    } catch {}
+    try {
+      localStorage.removeItem('privy-token');
+      document.cookie = 'privy-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'wallet-address=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    } catch {}
+    setKernelClient(null);
+    setSmartAccountAddress(null);
+    setHasInitialized(false);
+    setDegradedMode(false);
+    try {
+      await login();
+    } catch {}
   };
 
   // Helper function to check if smart account already exists
@@ -145,6 +169,26 @@ export const ZeroDevSmartWalletProvider = ({
 
     immediateRecovery();
   }, []); // Run only once on mount
+
+  useEffect(() => {
+    if (fallbackTimerStarted) return;
+    setFallbackTimerStarted(true);
+    const timeout = setTimeout(() => {
+      const storedWalletAddress = localStorage.getItem('zerodev-selected-wallet');
+      const existingSmartAccount = storedWalletAddress
+        ? localStorage.getItem(`zerodev-smart-account-${storedWalletAddress.toLowerCase()}`)
+        : null;
+      const shouldDegrade = !privyReady || !authenticated || (!kernelClient && !!smartAccountAddress);
+      if (shouldDegrade) {
+        if (!smartAccountAddress && existingSmartAccount) {
+          setSmartAccountAddress(existingSmartAccount as `0x${string}`);
+        }
+        setDegradedMode(true);
+        console.log('[ZERODEV] Fallback mode activated');
+      }
+    }, 7000);
+    return () => clearTimeout(timeout);
+  }, [fallbackTimerStarted, privyReady, authenticated, kernelClient, smartAccountAddress]);
 
   // Full recovery effect - wait for Privy and wallets to be ready
   useEffect(() => {
@@ -399,8 +443,9 @@ export const ZeroDevSmartWalletProvider = ({
         
         setSmartAccountAddress(finalSmartAccountAddress as `0x${string}`);
         setHasInitialized(true);
+        setDegradedMode(false);
           console.log('[ZERODEV] 🎉 Smart wallet initialization complete!');
-        } catch (err) {
+      } catch (err) {
           console.error(`[ZERODEV] ❌ Error initializing smart wallet (attempt ${retryCount + 1}):`, err);
           
           retryCount++;
@@ -460,6 +505,8 @@ export const ZeroDevSmartWalletProvider = ({
     canSponsorTransaction: !!kernelClient && !!smartAccountAddress && !isInitializing && !isRecovering,
     error,
     isLoading: isInitializing || isRecovering, // Alias for compatibility
+    degradedMode,
+    forceReconnect,
     executeTransaction,
   };
 

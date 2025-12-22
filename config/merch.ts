@@ -10,6 +10,56 @@ export interface MerchItem {
 
 export const MERCHANT_ADDRESS = '0x65E8F19f1e8a5907F388E416876B7e1250a9863C';
 
+// Payment Splitter Configuration
+// For items that use fee splitting (e.g., axolote navideño)
+// $10 goes to treasury, $35 goes to artist (from $45 total)
+
+// Treasury address (receives $10 from $45 = 22.22% of split payments)
+export const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS || '0x795df83a989c74832b2D108FF8200989B59FbaCf';
+
+// Artist address (receives $35 from $45 = 77.78% of split payments)
+export const ARTIST_ADDRESS = process.env.NEXT_PUBLIC_ARTIST_ADDRESS || '0x2A0029E7b5E74898e794b32722fBcb5276d38f18';
+
+// Payment Splitter contract address
+// Set via environment variables after deployment
+export const PAYMENT_SPLITTER_ADDRESS = 
+  process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS_MAINNET || 
+  process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS || 
+  null;
+
+// Items that should use payment splitting (by ID or tag)
+// For these items, payments go to the splitter contract instead of directly to merchant
+export const ITEMS_WITH_FEE_SPLIT: string[] = [
+  // Add item IDs or tags that should use fee splitting
+  // Example: 'axolote-navideno', or match by tag: 'navidad'
+];
+
+/**
+ * Check if an item should use fee splitting
+ */
+export function shouldUseFeeSplit(itemId: string, itemTag?: string | null): boolean {
+  // Check by ID
+  if (ITEMS_WITH_FEE_SPLIT.includes(itemId)) {
+    return true;
+  }
+  
+  // Check by tag (e.g., items tagged with 'navidad' or containing 'axolote')
+  if (itemTag) {
+    const tagLower = itemTag.toLowerCase();
+    if (tagLower.includes('navidad') || tagLower.includes('axolote')) {
+      return true;
+    }
+  }
+  
+  // Check by item ID containing keywords
+  const idLower = itemId.toLowerCase();
+  if (idLower.includes('axolote') || idLower.includes('navideno') || idLower.includes('navidad')) {
+    return true;
+  }
+  
+  return false;
+}
+
 export const merchItems: MerchItem[] = [
   {
     id: 'celo-shirt',

@@ -248,3 +248,4 @@ await provider.request({
 4. **Fallback Mechanisms**: Most features have both sponsored and wallet-based transaction paths for reliability.
 
 
+

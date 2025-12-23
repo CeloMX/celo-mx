@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Play, Image as ImageIcon } from 'lucide-react';
+import { isYouTubeUrl, getYouTubeEmbedFromUrl, getYouTubeVideoId, getYouTubeThumbnail } from '@/lib/youtube';
 
 interface ProductCarouselProps {
   images: string[];
@@ -13,6 +14,18 @@ interface ProductCarouselProps {
 export default function ProductCarousel({ images, video, alt, className = '' }: ProductCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  // Check if video is YouTube
+  const isYouTube = video ? isYouTubeUrl(video) : false;
+  const youtubeVideoId = video && isYouTube ? getYouTubeVideoId(video) : null;
+  const youtubeEmbedUrl = video && isYouTube ? getYouTubeEmbedFromUrl(video) : null;
+  const youtubeThumbnail = youtubeVideoId ? getYouTubeThumbnail(youtubeVideoId) : null;
+
+  // Get video cover image: prefer first additional image, then first image, then YouTube thumbnail
+  // images[0] is the main image, images[1+] are additional images
+  const videoCoverImage = images.length > 1 
+    ? images[1] // Use first additional image as video cover
+    : images[0] || (isYouTube ? youtubeThumbnail : null); // Fallback to main image or YouTube thumbnail
 
   // Combine video and images: video first if exists, then images
   const allMedia = video ? [video, ...images] : images;
@@ -54,32 +67,79 @@ export default function ProductCarousel({ images, video, alt, className = '' }: 
       <div className="relative w-full h-full">
         {isCurrentVideo && video ? (
           <div className="relative w-full h-full">
-            {!isVideoPlaying ? (
-              <div className="relative w-full h-full">
-                <img
-                  src={images[0] || video}
-                  alt={alt}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => setIsVideoPlaying(true)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition"
-                >
-                  <div className="bg-white/90 rounded-full p-4 hover:bg-white transition">
-                    <Play className="w-12 h-12 text-black ml-1" fill="black" />
+            {isYouTube && youtubeEmbedUrl ? (
+              // YouTube video with iframe
+              <>
+                {!isVideoPlaying ? (
+                  <div className="relative w-full h-full">
+                    {videoCoverImage ? (
+                      <img
+                        src={videoCoverImage}
+                        alt={alt}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center">
+                        <ImageIcon className="w-16 h-16 text-celo-muted" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setIsVideoPlaying(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition"
+                    >
+                      <div className="bg-white/90 rounded-full p-4 hover:bg-white transition">
+                        <Play className="w-12 h-12 text-black ml-1" fill="black" />
+                      </div>
+                    </button>
                   </div>
-                </button>
-              </div>
+                ) : (
+                  <iframe
+                    src={`${youtubeEmbedUrl}?autoplay=1`}
+                    title={alt}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    onLoad={() => setIsVideoPlaying(true)}
+                  />
+                )}
+              </>
             ) : (
-              <video
-                src={video}
-                controls
-                autoPlay
-                className="w-full h-full object-cover"
-                onEnded={() => setIsVideoPlaying(false)}
-              >
-                Tu navegador no soporta videos.
-              </video>
+              // Regular video (local or direct URL)
+              <>
+                {!isVideoPlaying ? (
+                  <div className="relative w-full h-full">
+                    {videoCoverImage ? (
+                      <img
+                        src={videoCoverImage}
+                        alt={alt}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center">
+                        <ImageIcon className="w-16 h-16 text-celo-muted" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setIsVideoPlaying(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition"
+                    >
+                      <div className="bg-white/90 rounded-full p-4 hover:bg-white transition">
+                        <Play className="w-12 h-12 text-black ml-1" fill="black" />
+                      </div>
+                    </button>
+                  </div>
+                ) : (
+                  <video
+                    src={video}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-cover"
+                    onEnded={() => setIsVideoPlaying(false)}
+                  >
+                    Tu navegador no soporta videos.
+                  </video>
+                )}
+              </>
             )}
           </div>
         ) : (

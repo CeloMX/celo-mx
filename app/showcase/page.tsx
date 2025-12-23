@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import projects from './projects.json';
 
 function previewImageUrl(url: string, customImage?: string, useFallback = false) {
@@ -101,7 +100,6 @@ export default function ShowcasePage() {
                         </div>
                       </div>
                     ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={imgSrc}
                         alt={project.title}
@@ -120,6 +118,11 @@ export default function ShowcasePage() {
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-lg font-semibold text-celo-fg mb-2">{p.title}</h3>
                   <p className="text-sm text-celo-muted mb-4 line-clamp-3">{p.description}</p>
+                  {p.metadata?.team && (
+                    <p className="text-xs text-celo-muted mb-3 italic">
+                      Por: {p.metadata.team}
+                    </p>
+                  )}
                   {p.tags?.length ? (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {p.tags.map((t: string) => (

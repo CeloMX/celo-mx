@@ -46,5 +46,32 @@
     "description": "La primera plataforma de DeFi social gamificada. Forma círculos con amigos, gana yields reales, y sube de nivel juntos.",
     "tags": ["defi", "social", "gamification"],
     "metadata": { "chain": "Celo", "category": "DeFi" }
+  },
+  {
+    "slug": "premios-xyz",
+    "title": "Premios.xyz",
+    "url": "https://farcaster.xyz/miniapps/6dZvq7vT-JVC/premioxyz",
+    "description": "Plataforma de premios y recompensas en Farcaster. Participa en concursos, gana premios y conecta con la comunidad a través de miniapps interactivas.",
+    "tags": ["farcaster", "miniapp", "rewards", "community"],
+    "image": "/projects/premios-xyz.png",
+    "metadata": { "chain": "Celo", "category": "Farcaster MiniApp", "team": "CriptoUNAM - Gerardo Pedrizco & Fer Tello" }
+  },
+  {
+    "slug": "onchain-crossword",
+    "title": "Crosswords by Psylabs",
+    "url": "https://farcaster.xyz/miniapps/4AyYbCYKwOb0/onchain-crossword",
+    "description": "Crucigramas on-chain interactivos en Farcaster. Resuelve puzzles, compite con amigos y gana recompensas mientras disfrutas de juegos de palabras descentralizados.",
+    "tags": ["farcaster", "miniapp", "gaming", "puzzles"],
+    "image": "/projects/onchain-crossword.png",
+    "metadata": { "chain": "Celo", "category": "Farcaster MiniApp", "team": "Psylabs" }
+  },
+  {
+    "slug": "chanchis",
+    "title": "Chanchis",
+    "url": "https://farcaster.xyz/miniapps/cid2j1MItv1P/chanchis",
+    "description": "Miniapp de Farcaster para gestionar y compartir tus chanchis (ahorros) de forma social. Ahorra junto a tu comunidad y alcanza metas financieras colectivas.",
+    "tags": ["farcaster", "miniapp", "savings", "social"],
+    "image": "/projects/chanchis.png",
+    "metadata": { "chain": "Celo", "category": "Farcaster MiniApp", "team": "Daniel Lagart & Andrea Junes" }
   }
 ]

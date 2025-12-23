@@ -71,8 +71,9 @@ export default function ShowcasePage() {
 
         {/* Componente para renderizar un proyecto */}
         {(() => {
-          const ProjectCard = ({ project }: { project: typeof projects[0] }) => {
-            const ProjectImage = ({ project }: { project: typeof project }) => {
+          type ProjectType = typeof projects[0];
+          const ProjectCard = ({ project }: { project: ProjectType }) => {
+            const ProjectImage = ({ project }: { project: ProjectType }) => {
               const [imgSrc, setImgSrc] = useState(previewImageUrl(project.url, (project as any).image, false));
               const [errorCount, setErrorCount] = useState(0);
               const [showPlaceholder, setShowPlaceholder] = useState(false);

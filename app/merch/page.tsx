@@ -12,6 +12,7 @@ import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
 import { CMT_FAUCET_ABI, getCmtFaucetAddress } from '@/lib/contracts/cmtFaucet';
 import { encodeFunctionData } from 'viem';
 import Image from 'next/image';
+import ProductCarousel from '@/components/marketplace/ProductCarousel';
 
 type MerchItem = {
   id: string;
@@ -19,6 +20,8 @@ type MerchItem = {
   description?: string;
   price: number;
   image: string;
+  images?: string[];
+  video?: string | null;
   category: 'clothing' | 'accessories';
   sizes?: string[];
   tag?: string | null;
@@ -410,16 +413,16 @@ function MerchPageInner() {
                   Agotado
                 </div>
               )}
-              <div className="aspect-square bg-gradient-to-br from-celo-yellow/20 to-celo-yellow/5 flex items-center justify-center relative">
+              <div className="relative">
                 {item.tag ? (
-                  <span className={`absolute ${isPurchased(item.id) ? 'top-2 left-2' : 'top-2 right-2'} z-10 px-2 py-1 rounded-lg bg-celoLegacy-yellow text-black text-xs font-semibold shadow`}>
+                  <span className={`absolute ${isPurchased(item.id) ? 'top-2 left-2' : 'top-2 right-2'} z-20 px-2 py-1 rounded-lg bg-celoLegacy-yellow text-black text-xs font-semibold shadow`}>
                     {item.tag}
                   </span>
                 ) : null}
-                <img
-                  src={item.image}
+                <ProductCarousel
+                  images={[item.image, ...(item.images || [])]}
+                  video={item.video}
                   alt={item.name}
-                  className="w-full h-full object-cover"
                 />
               </div>
                 <div className="p-6">

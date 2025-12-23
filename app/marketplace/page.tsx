@@ -11,15 +11,15 @@ import { MERCHANT_ADDRESS, shouldUseFeeSplit, PAYMENT_SPLITTER_ADDRESS } from '@
 
 /**
  * Get the price for an item
- * Axolote navideño uses 45 USDT (only USDT option)
+ * Axolote navideño uses 45 USDT/cUSD (stable 1:1 with USD)
  * Other items use their database price
  * @param _paymentMethod - Payment method (kept for API consistency, not used internally)
  */
 // eslint-disable-next-line no-unused-vars
-const getItemPrice = (item: MerchItem, _paymentMethod: 'CMT' | 'USDT'): number => {
+const getItemPrice = (item: MerchItem, _paymentMethod: 'CMT' | 'USDT' | 'CUSD'): number => {
   const isAxolote = shouldUseFeeSplit(item.id, item.tag);
   if (isAxolote) {
-    return 45; // Precio fijo de 45 USDT para el axolote navideño
+    return 45; // Precio fijo de 45 USDT/cUSD para el axolote navideño
   }
   // Para otros artículos, usar el precio de la base de datos
   return item.price;
@@ -33,6 +33,7 @@ const isUSDTOnly = (item: MerchItem): boolean => {
 };
 import { CMT_TOKEN_CONFIG, ERC20_ABI, cmtToWei } from '@/lib/contracts/cmt';
 import { USDT_TOKEN_CONFIG, usdtToSmallestUnit } from '@/lib/contracts/usdt';
+import { CUSD_TOKEN_CONFIG, cusdToSmallestUnit } from '@/lib/contracts/cusd';
 import { encodeSplitPayment } from '@/lib/contracts/paymentSplitter';
 import { CMT_FAUCET_ABI, getCmtFaucetAddress } from '@/lib/contracts/cmtFaucet';
 import { encodeFunctionData } from 'viem';
@@ -55,6 +56,9 @@ type MerchItem = {
   isActive: boolean;
 }
 
+type PaymentMethod = 'CMT' | 'USDT' | 'CUSD';
+type PayerType = 'SMART' | 'EOA';
+
 function MarketplacePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -68,7 +72,7 @@ function MarketplacePageInner() {
   const [purchases, setPurchases] = useState<Record<string, { txHash: string; timestamp: number }>>({});
   const [items, setItems] = useState<MerchItem[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<Record<string, 'CMT' | 'USDT'>>({});
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<Record<string, PaymentMethod>>({});
   const userIdParam = (searchParams.get('userId') || '').trim() || null;
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   
@@ -96,8 +100,19 @@ function MarketplacePageInner() {
   // Store pending purchase item for shipping form
   const [pendingPurchaseItem, setPendingPurchaseItem] = useState<MerchItem | null>(null);
 
+  // Payer choice state (Smart wallet gasless vs MetaMask EOA)
+  const [payerType, setPayerType] = useState<PayerType>('SMART');
+  const [payerChoice, setPayerChoice] = useState<{
+    isOpen: boolean;
+    item: MerchItem | null;
+  }>({
+    isOpen: false,
+    item: null,
+  });
+
   const cmtBalance = balances.find(b => b.symbol === 'CMT');
   const usdtBalance = balances.find(b => b.symbol === 'USDT');
+  const cusdBalance = balances.find(b => b.symbol === 'cUSD');
 
   const showModal = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', title?: string) => {
     setModal({ isOpen: true, message, type, title });
@@ -172,14 +187,16 @@ function MarketplacePageInner() {
 
   const handlePurchase = async (item: MerchItem) => {
     // Validation checks
-    if (!smartAccountAddress) {
-      showModal('Smart account no está disponible. Por favor espera a que se inicialice.', 'warning', 'Atención');
-      return;
-    }
-    
-    if (!smartAccount.canSponsorTransaction) {
-      showModal('Smart account no está listo para transacciones patrocinadas. Por favor espera...', 'warning', 'Atención');
-      return;
+    if (payerType === 'SMART') {
+      if (!smartAccountAddress) {
+        showModal('Smart account no está disponible. Por favor espera a que se inicialice.', 'warning', 'Atención');
+        return;
+      }
+      
+      if (!smartAccount.canSponsorTransaction) {
+        showModal('Smart account no está listo para transacciones patrocinadas. Por favor espera...', 'warning', 'Atención');
+        return;
+      }
     }
     
     // Permitir compras múltiples - eliminado: if (isPurchased(item.id)) return;
@@ -202,24 +219,40 @@ function MarketplacePageInner() {
       return;
     }
 
-    // For axolote, only USDT is allowed. For others, use selected method or default to CMT
+    // Para el axolote, solo se permiten stablecoins (USDT o cUSD). Para otros, CMT/USDT.
     const isAxolote = isUSDTOnly(item);
-    const paymentMethod = isAxolote ? 'USDT' : (selectedPaymentMethod[item.id] || 'CMT');
+    let paymentMethod: PaymentMethod;
+    if (isAxolote) {
+      const selected = selectedPaymentMethod[item.id];
+      // Por defecto USDT; si el usuario eligió cUSD, usar cUSD
+      paymentMethod = selected === 'CUSD' ? 'CUSD' : 'USDT';
+    } else {
+      const selected = selectedPaymentMethod[item.id];
+      // Para otros artículos, solo CMT o USDT (ignoramos CUSD si quedó seteado por error)
+      paymentMethod = selected === 'USDT' ? 'USDT' : 'CMT';
+    }
     
-    // Get price: 45 USDT for axolote, database price for others
+    // Get price: 45 USDT/cUSD para axolote, precio de DB para el resto
     const price = getItemPrice(item, paymentMethod);
-    const tokenBalance = paymentMethod === 'CMT' ? cmtBalance : usdtBalance;
-    const tokenSymbol = paymentMethod;
+    const tokenBalance =
+      paymentMethod === 'CMT'
+        ? cmtBalance
+        : paymentMethod === 'USDT'
+          ? usdtBalance
+          : cusdBalance;
+    const tokenSymbol = paymentMethod === 'CUSD' ? 'cUSD' : paymentMethod;
 
-    // Check if user has enough balance
-    const balanceNum = parseFloat(tokenBalance?.formattedBalance || '0');
-    if (balanceNum < price) {
-      showModal(
-        `Balance insuficiente. Necesitas ${price} ${tokenSymbol} pero solo tienes ${balanceNum.toFixed(4)} ${tokenSymbol}.`,
-        'error',
-        'Balance insuficiente'
-      );
-      return;
+    // Para smart wallet verificamos balance; para EOA dejamos que MetaMask valide
+    if (payerType === 'SMART') {
+      const balanceNum = parseFloat(tokenBalance?.formattedBalance || '0');
+      if (balanceNum < price) {
+        showModal(
+          `Balance insuficiente. Necesitas ${price} ${tokenSymbol} pero solo tienes ${balanceNum.toFixed(4)} ${tokenSymbol}.`,
+          'error',
+          'Balance insuficiente'
+        );
+        return;
+      }
     }
 
     // Show shipping form instead of processing purchase directly
@@ -234,101 +267,174 @@ function MarketplacePageInner() {
     setShippingForm({ isOpen: false, item: null });
     setPurchasingItem(item.id);
 
-    // For axolote, only USDT is allowed. For others, use selected method or default to CMT
+    // Para el axolote, solo se permiten stablecoins (USDT o cUSD). Para otros, CMT/USDT.
     const isAxolote = isUSDTOnly(item);
-    const paymentMethod = isAxolote ? 'USDT' : (selectedPaymentMethod[item.id] || 'CMT');
+    let paymentMethod: PaymentMethod;
+    if (isAxolote) {
+      const selected = selectedPaymentMethod[item.id];
+      paymentMethod = selected === 'CUSD' ? 'CUSD' : 'USDT';
+    } else {
+      const selected = selectedPaymentMethod[item.id];
+      paymentMethod = selected === 'USDT' ? 'USDT' : 'CMT';
+    }
     
-    // Get price: 45 USDT for axolote, database price for others
+    // Get price: 45 USDT/cUSD para axolote, precio de DB para el resto
     const price = getItemPrice(item, paymentMethod);
-    const tokenConfig = paymentMethod === 'CMT' ? CMT_TOKEN_CONFIG : USDT_TOKEN_CONFIG;
-    const tokenSymbol = paymentMethod;
+    const tokenConfig =
+      paymentMethod === 'CMT'
+        ? CMT_TOKEN_CONFIG
+        : paymentMethod === 'USDT'
+          ? USDT_TOKEN_CONFIG
+          : CUSD_TOKEN_CONFIG;
+    const tokenSymbol = paymentMethod === 'CUSD' ? 'cUSD' : paymentMethod;
+
+    // Convert amount to smallest unit based on token decimals
+    const amountInSmallestUnit =
+      paymentMethod === 'CMT'
+        ? cmtToWei(price)
+        : paymentMethod === 'USDT'
+          ? usdtToSmallestUnit(price)
+          : cusdToSmallestUnit(price);
+
+    // Check if this item should use fee splitting
+    const useFeeSplit = shouldUseFeeSplit(item.id, item.tag);
+    const splitterAddress = PAYMENT_SPLITTER_ADDRESS as `0x${string}` | null;
+    
+    let txHash: string | null = null;
 
     try {
       console.log(`[MERCH] Starting real ${tokenSymbol} transfer:`, {
         item: item.name,
         price: price,
         paymentMethod: tokenSymbol,
-        from: smartAccountAddress,
+        payerType,
+        fromSmartAccount: smartAccountAddress,
         to: MERCHANT_ADDRESS,
         tokenAddress: tokenConfig.address,
         shippingData,
       });
-      
-      // Convert amount to smallest unit based on token decimals
-      const amountInSmallestUnit = paymentMethod === 'CMT' 
-        ? cmtToWei(price)
-        : usdtToSmallestUnit(price);
-      console.log(`[MERCH] Amount in smallest unit:`, amountInSmallestUnit.toString());
-      
-      // Check if this item should use fee splitting
-      const useFeeSplit = shouldUseFeeSplit(item.id, item.tag);
-      const splitterAddress = PAYMENT_SPLITTER_ADDRESS as `0x${string}` | null;
-      
-      let txHash: string | null = null;
-      
-      if (useFeeSplit && splitterAddress) {
-        // Use payment splitter: 24% to treasury, 76% to artist
-        console.log(`[MERCH] Using payment splitter for ${item.name}:`, {
-          splitterAddress,
-          totalAmount: amountInSmallestUnit.toString(),
-          treasuryShare: '$10 (22.22%)',
-          artistShare: '$35 (77.78%)',
-        });
-        
-        // First, approve the splitter contract to spend tokens
-        const approveData = encodeFunctionData({
-          abi: ERC20_ABI as any,
-          functionName: 'approve',
-          args: [splitterAddress, amountInSmallestUnit],
-        });
-        
-        console.log('[MERCH] Approving splitter contract...');
-        const approveTxHash = await smartAccount.executeTransaction({
-          to: tokenConfig.address,
-          data: approveData,
-          value: 0n,
-        });
-        
-        if (!approveTxHash) {
-          throw new Error('Approval transaction failed');
-        }
-        
-        console.log('[MERCH] Approval completed:', approveTxHash);
-        
-        // Wait a moment for approval to be processed
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Now call splitPayment on the splitter contract
-        const splitData = encodeSplitPayment(tokenConfig.address, amountInSmallestUnit);
-        
-        console.log('[MERCH] Executing split payment...');
-        txHash = await smartAccount.executeTransaction({
-          to: splitterAddress,
-          data: splitData,
-          value: 0n,
-        });
-        
-        console.log(`[MERCH] ✅ Payment split completed:`, txHash);
-      } else {
-        // Direct transfer to merchant (existing behavior)
-        console.log(`[MERCH] Using direct transfer to merchant for ${item.name}`);
-        
-        // Encode the ERC20 transfer function call
-        const transferData = encodeFunctionData({
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [MERCHANT_ADDRESS as `0x${string}`, amountInSmallestUnit],
-        });
 
-        console.log(`[MERCH] Executing sponsored ${tokenSymbol} transfer via ZeroDev...`);
-        console.log('[MERCH] Transfer data:', transferData);
-        
-        // Execute the transfer using ZeroDev sponsored transaction
-        txHash = await smartAccount.executeTransaction({
-          to: tokenConfig.address,
-          data: transferData,
-          value: 0n, // No ETH value needed for ERC20 transfer
-        });
+      if (payerType === 'SMART') {
+        // === SMART WALLET (gasless) PATH ===
+        console.log(`[MERCH] Using smart wallet (gasless)`);
+
+        if (useFeeSplit && splitterAddress) {
+          // Use payment splitter
+          console.log(`[MERCH] Using payment splitter for ${item.name}:`, {
+            splitterAddress,
+            totalAmount: amountInSmallestUnit.toString(),
+            treasuryShare: '$10 (22.22%)',
+            artistShare: '$35 (77.78%)',
+          });
+          
+          // First, approve the splitter contract to spend tokens
+          const approveData = encodeFunctionData({
+            abi: ERC20_ABI as any,
+            functionName: 'approve',
+            args: [splitterAddress, amountInSmallestUnit],
+          });
+          
+          console.log('[MERCH] Approving splitter contract from smart account...');
+          const approveTxHash = await smartAccount.executeTransaction({
+            to: tokenConfig.address,
+            data: approveData,
+            value: 0n,
+          });
+          
+          if (!approveTxHash) {
+            throw new Error('Approval transaction failed');
+          }
+          
+          console.log('[MERCH] Approval completed:', approveTxHash);
+          
+          // Wait a moment for approval to be processed
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Now call splitPayment on the splitter contract
+          const splitData = encodeSplitPayment(tokenConfig.address, amountInSmallestUnit);
+          
+          console.log('[MERCH] Executing split payment from smart account...');
+          txHash = await smartAccount.executeTransaction({
+            to: splitterAddress,
+            data: splitData,
+            value: 0n,
+          });
+          
+          console.log(`[MERCH] ✅ Payment split completed:`, txHash);
+        } else {
+          // Direct transfer to merchant (existing behavior)
+          console.log(`[MERCH] Using direct transfer to merchant for ${item.name} from smart account`);
+          
+          // Encode the ERC20 transfer function call
+          const transferData = encodeFunctionData({
+            abi: ERC20_ABI,
+            functionName: 'transfer',
+            args: [MERCHANT_ADDRESS as `0x${string}`, amountInSmallestUnit],
+          });
+
+          console.log(`[MERCH] Executing sponsored ${tokenSymbol} transfer via ZeroDev...`);
+          console.log('[MERCH] Transfer data:', transferData);
+          
+          // Execute the transfer using ZeroDev sponsored transaction
+          txHash = await smartAccount.executeTransaction({
+            to: tokenConfig.address,
+            data: transferData,
+            value: 0n, // No CELO value needed for ERC20 transfer
+          });
+        }
+      } else {
+        // === EOA (MetaMask) PATH ===
+        console.log('[MERCH] Using MetaMask EOA for payment');
+
+        const ethereum = (typeof window !== 'undefined' ? (window as any).ethereum : null);
+        const from = (wallet?.address as string | undefined)?.toLowerCase();
+
+        if (!ethereum || !from) {
+          throw new Error('MetaMask no está disponible o wallet EOA no detectada');
+        }
+
+        // Helper to send a raw transaction via eth_sendTransaction
+        const sendTx = async (to: string, data: `0x${string}`): Promise<string> => {
+          const txHash: string = await ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [
+              {
+                from,
+                to,
+                data,
+                value: '0x0',
+              },
+            ],
+          });
+          return txHash;
+        };
+
+        if (useFeeSplit && splitterAddress) {
+          console.log('[MERCH] EOA path with payment splitter');
+
+          // 1) Approve splitter to spend tokens
+          const approveData = encodeFunctionData({
+            abi: ERC20_ABI as any,
+            functionName: 'approve',
+            args: [splitterAddress, amountInSmallestUnit],
+          });
+          console.log('[MERCH] Sending approve tx from EOA...');
+          await sendTx(tokenConfig.address, approveData);
+
+          // 2) Call splitPayment on splitter
+          const splitData = encodeSplitPayment(tokenConfig.address, amountInSmallestUnit);
+          console.log('[MERCH] Sending splitPayment tx from EOA...');
+          txHash = await sendTx(splitterAddress, splitData);
+        } else {
+          console.log('[MERCH] EOA direct transfer to merchant');
+
+          const transferData = encodeFunctionData({
+            abi: ERC20_ABI,
+            functionName: 'transfer',
+            args: [MERCHANT_ADDRESS as `0x${string}`, amountInSmallestUnit],
+          });
+          txHash = await sendTx(tokenConfig.address, transferData);
+        }
       }
 
       if (!txHash) {
@@ -376,7 +482,11 @@ function MarketplacePageInner() {
         setResolvedUserId(purchaseUserId);
       }
 
-      setPurchases((prev) => ({ ...prev, [item.id]: { txHash, timestamp: Date.now() } }));
+      const updatedPurchases: Record<string, { txHash: string; timestamp: number }> = {
+        ...purchases,
+        [item.id]: { txHash: txHash as string, timestamp: Date.now() },
+      };
+      setPurchases(updatedPurchases);
       showModal(
         `✓ Compra exitosa! ${price} ${tokenSymbol} transferidos.\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`,
         'success',
@@ -527,7 +637,9 @@ function MarketplacePageInner() {
           </button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-celo-fg">Celo MX Merch</h1>
-            <p className="text-celo-muted mt-1">Compra con CMT o USDT · Transacciones sin gas</p>
+            <p className="text-celo-muted mt-1">
+              Compra con CMT o USDT/cUSD · Transacciones sin gas
+            </p>
           </div>
           <button
             onClick={() => router.push('/marketplace/purchases')}
@@ -625,47 +737,105 @@ function MarketplacePageInner() {
                     <h3 className="text-xl font-bold text-celo-fg mb-2">{item.name}</h3>
                     <p className="text-celo-muted text-sm mb-4">{item.description}</p>
                     
-                    {/* Payment Method Selector - Only show for non-axolote items */}
-                    {!isPurchased(item.id) && !isUSDTOnly(item) && (
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-celo-muted mb-2">
-                          Método de pago
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setSelectedPaymentMethod((s) => ({ ...s, [item.id]: 'CMT' }))}
-                            className={`flex-1 px-4 py-2 rounded-xl font-semibold transition border ${
-                              (selectedPaymentMethod[item.id] || 'CMT') === 'CMT'
-                                ? 'bg-celoLegacy-yellow text-black border-celo-yellow'
-                                : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
-                            }`}
-                          >
-                            {getItemPrice(item, 'CMT')} CMT
-                          </button>
-                          <button
-                            onClick={() => setSelectedPaymentMethod((s) => ({ ...s, [item.id]: 'USDT' }))}
-                            className={`flex-1 px-4 py-2 rounded-xl font-semibold transition border ${
-                              selectedPaymentMethod[item.id] === 'USDT'
-                                ? 'bg-celoLegacy-yellow text-black border-celo-yellow'
-                                : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
-                            }`}
-                          >
-                            {getItemPrice(item, 'USDT')} USDT
-                          </button>
-                        </div>
+                    {/* Payment Method Selector - siempre visible para poder elegir USDT/cUSD incluso si ya se compró */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-celo-muted mb-2">
+                        Método de pago
+                      </label>
+                      <div className="flex gap-2">
+                        {isUSDTOnly(item) ? (
+                          <>
+                            <button
+                              onClick={() =>
+                                setSelectedPaymentMethod((s) => ({
+                                  ...s,
+                                  [item.id]: 'USDT',
+                                }))
+                              }
+                              className={`flex-1 px-4 py-2 rounded-xl font-semibold transition border ${
+                                (selectedPaymentMethod[item.id] || 'USDT') === 'USDT'
+                                  ? 'bg-celoLegacy-yellow text-black border-celo-yellow'
+                                  : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
+                              }`}
+                            >
+                              {getItemPrice(item, 'USDT')} USDT
+                            </button>
+                            <button
+                              onClick={() =>
+                                setSelectedPaymentMethod((s) => ({
+                                  ...s,
+                                  [item.id]: 'CUSD',
+                                }))
+                              }
+                              className={`flex-1 px-4 py-2 rounded-xl font-semibold transition border ${
+                                selectedPaymentMethod[item.id] === 'CUSD'
+                                  ? 'bg-celoLegacy-yellow text-black border-celo-yellow'
+                                  : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
+                              }`}
+                            >
+                              {getItemPrice(item, 'CUSD')} cUSD
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() =>
+                                setSelectedPaymentMethod((s) => ({
+                                  ...s,
+                                  [item.id]: 'CMT',
+                                }))
+                              }
+                              className={`flex-1 px-4 py-2 rounded-xl font-semibold transition border ${
+                                (selectedPaymentMethod[item.id] || 'CMT') === 'CMT'
+                                  ? 'bg-celoLegacy-yellow text-black border-celo-yellow'
+                                  : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
+                              }`}
+                            >
+                              {getItemPrice(item, 'CMT')} CMT
+                            </button>
+                            <button
+                              onClick={() =>
+                                setSelectedPaymentMethod((s) => ({
+                                  ...s,
+                                  [item.id]: 'USDT',
+                                }))
+                              }
+                              className={`flex-1 px-4 py-2 rounded-xl font-semibold transition border ${
+                                selectedPaymentMethod[item.id] === 'USDT'
+                                  ? 'bg-celoLegacy-yellow text-black border-celo-yellow'
+                                  : 'bg-transparent text-celo-fg border-celo-border hover:border-celo-yellow'
+                              }`}
+                            >
+                              {getItemPrice(item, 'USDT')} USDT
+                            </button>
+                          </>
+                        )}
                       </div>
-                    )}
+                    </div>
                     
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-celo-fg">
                           {(() => {
                             const isAxolote = isUSDTOnly(item);
-                            const paymentMethod = isAxolote ? 'USDT' : (selectedPaymentMethod[item.id] || 'CMT');
+                            let paymentMethod: PaymentMethod;
+                            if (isAxolote) {
+                              const selected = selectedPaymentMethod[item.id];
+                              paymentMethod = selected === 'CUSD' ? 'CUSD' : 'USDT';
+                            } else {
+                              const selected = selectedPaymentMethod[item.id];
+                              paymentMethod = selected === 'USDT' ? 'USDT' : 'CMT';
+                            }
                             const price = getItemPrice(item, paymentMethod);
+                            const label = paymentMethod === 'CUSD' ? 'cUSD' : paymentMethod;
+                            const colorClass =
+                              paymentMethod === 'CMT' ? 'text-celo-yellow' : 'text-green-500';
                             return (
                               <>
-                                {price} <span className={`text-lg ${paymentMethod === 'CMT' ? 'text-celo-yellow' : 'text-green-500'}`}>{paymentMethod}</span>
+                                {price}{' '}
+                                <span className={`text-lg ${colorClass}`}>
+                                  {label}
+                                </span>
                               </>
                             );
                           })()}
@@ -693,7 +863,9 @@ function MarketplacePageInner() {
                           </a>
                         )}
                         <button
-                          onClick={() => handlePurchase(item)}
+                          onClick={() => {
+                            setPayerChoice({ isOpen: true, item });
+                          }}
                           disabled={purchasingItem === item.id || item.stock <= 0}
                           className="px-6 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed border border-celo-border/40"
                         >
@@ -919,6 +1091,45 @@ function MarketplacePageInner() {
               </a>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Payer choice modal: Smart (gasless) vs MetaMask (EOA) */}
+      <Modal
+        isOpen={payerChoice.isOpen}
+        onClose={() => setPayerChoice({ isOpen: false, item: null })}
+        title="¿Cómo quieres pagar?"
+        type="info"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-celo-muted">
+            Elige si quieres usar tu smart wallet sin pagar gas o tu wallet conectada (MetaMask)
+            pagando la comisión de red.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={async () => {
+                if (!payerChoice.item) return;
+                setPayerType('SMART');
+                setPayerChoice({ isOpen: false, item: null });
+                await handlePurchase(payerChoice.item);
+              }}
+              className="w-full px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40"
+            >
+              Usar Smart Wallet (sin gas)
+            </button>
+            <button
+              onClick={async () => {
+                if (!payerChoice.item) return;
+                setPayerType('EOA');
+                setPayerChoice({ isOpen: false, item: null });
+                await handlePurchase(payerChoice.item);
+              }}
+              className="w-full px-4 py-2 bg-transparent text-celo-fg font-semibold rounded-xl border border-celo-border hover:border-celo-yellow transition"
+            >
+              Usar MetaMask (yo pago el gas)
+            </button>
+          </div>
         </div>
       </Modal>
 

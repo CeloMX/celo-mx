@@ -1,59 +1,12 @@
 [
   {
-    "slug": "impact-market-maker",
-    "title": "Impact Market Maker",
-    "url": "https://imm-jet.vercel.app/",
-    "description": "Terminal DeFi con trading, listados de tokens, vesting y panel de métricas para el ecosistema Celo.",
-    "tags": ["defi", "trading", "dashboard"],
-    "metadata": { "chain": "Celo", "category": "DeFi" }
-  },
-  {
-    "slug": "de-payments",
-    "title": "De Payments",
-    "url": "https://motusdao-hub.vercel.app/",
-    "description": "Pagos cripto sencillos y rápidos sobre Celo para comercios y usuarios.",
-    "tags": ["payments", "merchant", "ux"],
-    "metadata": { "chain": "Celo", "category": "Pagos" }
-  },
-  {
-    "slug": "somos",
-    "title": "SOMOS",
-    "url": "https://somos-two.vercel.app/",
-    "description": "Sistema Organizado de Movilización Social: coordinación y herramientas comunitarias.",
-    "tags": ["social", "coordination", "community"],
-    "metadata": { "chain": "Celo", "category": "Social" }
-  },
-  {
-    "slug": "celoween",
-    "title": "Celoween",
-    "url": "https://celoween.vercel.app/",
-    "description": "Plataforma de concursos y votaciones con gasless y NFTs en Celo.",
-    "tags": ["contest", "gasless", "nft"],
-    "metadata": { "chain": "Celo", "category": "Community" }
-  },
-  {
-    "slug": "skatebonties",
-    "title": "SkateBounties",
-    "url": "https://skatebonties.vercel.app/",
-    "description": "Bounties para skaters: encuentra retos, súbelos y gana recompensas.",
-    "tags": ["bounties", "sports", "community"],
-    "metadata": { "chain": "Celo", "category": "Bounties" }
-  },
-  {
-    "slug": "genkifi",
-    "title": "GenkiFi",
-    "url": "https://genki-fi-celo-web.vercel.app/",
-    "description": "La primera plataforma de DeFi social gamificada. Forma círculos con amigos, gana yields reales, y sube de nivel juntos.",
-    "tags": ["defi", "social", "gamification"],
-    "metadata": { "chain": "Celo", "category": "DeFi" }
-  },
-  {
     "slug": "premios-xyz",
     "title": "Premios.xyz",
     "url": "https://farcaster.xyz/miniapps/6dZvq7vT-JVC/premioxyz",
     "description": "Plataforma de premios y recompensas en Farcaster. Participa en concursos, gana premios y conecta con la comunidad a través de miniapps interactivas.",
     "tags": ["farcaster", "miniapp", "rewards", "community"],
     "image": "/projects/premios-xyz.png",
+    "status": "new",
     "metadata": { "chain": "Celo", "category": "Farcaster MiniApp", "team": "CriptoUNAM - Gerardo Pedrizco & Fer Tello" }
   },
   {
@@ -63,6 +16,7 @@
     "description": "Crucigramas on-chain interactivos en Farcaster. Resuelve puzzles, compite con amigos y gana recompensas mientras disfrutas de juegos de palabras descentralizados.",
     "tags": ["farcaster", "miniapp", "gaming", "puzzles"],
     "image": "/projects/onchain-crossword.png",
+    "status": "new",
     "metadata": { "chain": "Celo", "category": "Farcaster MiniApp", "team": "Psylabs" }
   },
   {
@@ -72,6 +26,61 @@
     "description": "Miniapp de Farcaster para gestionar y compartir tus chanchis (ahorros) de forma social. Ahorra junto a tu comunidad y alcanza metas financieras colectivas.",
     "tags": ["farcaster", "miniapp", "savings", "social"],
     "image": "/projects/chanchis.png",
+    "status": "new",
     "metadata": { "chain": "Celo", "category": "Farcaster MiniApp", "team": "Daniel Lagart & Andrea Junes" }
+  },
+  {
+    "slug": "de-payments",
+    "title": "De Payments",
+    "url": "https://motusdao-hub.vercel.app/",
+    "description": "Pagos cripto sencillos y rápidos sobre Celo para comercios y usuarios.",
+    "tags": ["payments", "merchant", "ux"],
+    "status": "active",
+    "metadata": { "chain": "Celo", "category": "Pagos" }
+  },
+  {
+    "slug": "somos",
+    "title": "SOMOS",
+    "url": "https://somos-two.vercel.app/",
+    "description": "Sistema Organizado de Movilización Social: coordinación y herramientas comunitarias.",
+    "tags": ["social", "coordination", "community"],
+    "status": "active",
+    "metadata": { "chain": "Celo", "category": "Social" }
+  },
+  {
+    "slug": "celoween",
+    "title": "Celoween",
+    "url": "https://celoween.vercel.app/",
+    "description": "Plataforma de concursos y votaciones con gasless y NFTs en Celo.",
+    "tags": ["contest", "gasless", "nft"],
+    "status": "active",
+    "metadata": { "chain": "Celo", "category": "Community" }
+  },
+  {
+    "slug": "genkifi",
+    "title": "GenkiFi",
+    "url": "https://genki-fi-celo-web.vercel.app/",
+    "description": "La primera plataforma de DeFi social gamificada. Forma círculos con amigos, gana yields reales, y sube de nivel juntos.",
+    "tags": ["defi", "social", "gamification"],
+    "status": "active",
+    "metadata": { "chain": "Celo", "category": "DeFi" }
+  },
+  {
+    "slug": "impact-market-maker",
+    "title": "Impact Market Maker",
+    "url": "https://imm-jet.vercel.app/",
+    "description": "Terminal DeFi con trading, listados de tokens, vesting y panel de métricas para el ecosistema Celo.",
+    "tags": ["defi", "trading", "dashboard"],
+    "status": "building",
+    "metadata": { "chain": "Celo", "category": "DeFi" }
+  },
+  {
+    "slug": "skatebonties",
+    "title": "SkateBounties",
+    "url": "https://skatebonties.vercel.app/",
+    "description": "Bounties para skaters: encuentra retos, súbelos y gana recompensas.",
+    "tags": ["bounties", "sports", "community"],
+    "status": "building",
+    "metadata": { "chain": "Celo", "category": "Bounties" }
   }
 ]

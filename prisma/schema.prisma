@@ -238,7 +238,7 @@ model Purchase {
   txhash          String    @unique(map: "purchase_txhash_key")
   amount          Int
   selectedsize    String?
-  merchantaddress String    @default("0x65E8F19f1e8a5907F388E416876B7e1250a9863C")
+  merchantaddress String    @default("0x795df83a989c74832b2D108FF8200989B59FbaCf")
   status          String    @default("completed")
   createdat       DateTime  @default(now()) @db.Timestamptz(6)
   updatedat       DateTime  @default(now()) @db.Timestamptz(6)

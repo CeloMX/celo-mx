@@ -8,7 +8,13 @@ export interface MerchItem {
   sizes?: string[];
 }
 
-export const MERCHANT_ADDRESS = '0x65E8F19f1e8a5907F388E416876B7e1250a9863C';
+// Merchant address (receives direct payments for items without fee splitting)
+// Defaults to treasury address if not specified
+// IMPORTANT: This should be a proper wallet or contract address, NOT a Privy embedded wallet
+export const MERCHANT_ADDRESS = 
+  process.env.NEXT_PUBLIC_MERCHANT_ADDRESS || 
+  process.env.NEXT_PUBLIC_TREASURY_ADDRESS || 
+  '0x795df83a989c74832b2D108FF8200989B59FbaCf';
 
 // Payment Splitter Configuration
 // For items that use fee splitting (e.g., axolote navideño)
@@ -21,11 +27,15 @@ export const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS || '0x7
 export const ARTIST_ADDRESS = process.env.NEXT_PUBLIC_ARTIST_ADDRESS || '0x2A0029E7b5E74898e794b32722fBcb5276d38f18';
 
 // Payment Splitter contract address
-// Set via environment variables after deployment
+// Mainnet: 0x8fbfb62ABf46Ba81eEe5a41f0dF72d35cC75C18a
+// Set via environment variables, or uses mainnet default if not specified
 export const PAYMENT_SPLITTER_ADDRESS = 
   process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS_MAINNET || 
   process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS || 
-  null;
+  '0x8fbfb62ABf46Ba81eEe5a41f0dF72d35cC75C18a'; // Mainnet Payment Splitter contract
+
+// Test mode: reduces prices for testing (set NEXT_PUBLIC_TEST_MODE=true)
+export const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
 
 // Items that should use payment splitting (by ID or tag)
 // For these items, payments go to the splitter contract instead of directly to merchant

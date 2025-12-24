@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedUser, getUserWalletAddress } from '@/lib/auth-server'
+import { shouldUseFeeSplit, PAYMENT_SPLITTER_ADDRESS, MERCHANT_ADDRESS } from '@/config/merch'
 
 export async function POST(request: NextRequest) {
   try {
@@ -130,6 +131,14 @@ export async function POST(request: NextRequest) {
       if (updated.count === 0) {
         throw new Error('Out of stock')
       }
+      // Determine the correct merchant address based on item type
+      // For items with fee splitting (axolote), payment goes to Payment Splitter contract
+      // For regular items, payment goes to MERCHANT_ADDRESS (treasury)
+      const useFeeSplit = shouldUseFeeSplit(itemId, item.tag || null);
+      const merchantAddress = useFeeSplit && PAYMENT_SPLITTER_ADDRESS 
+        ? PAYMENT_SPLITTER_ADDRESS 
+        : MERCHANT_ADDRESS;
+
       const purchase = await tx.purchase.create({
         data: {
           userid: userId!,
@@ -137,6 +146,7 @@ export async function POST(request: NextRequest) {
           txhash: txHash,
           amount,
           selectedsize: selectedSize || null,
+          merchantaddress: merchantAddress,
         }
       })
 

@@ -68,14 +68,15 @@ export const PAYMENT_SPLITTER_ABI = [
 
 /**
  * Get the payment splitter contract address for a given chain
+ * Mainnet: 0x8fbfb62ABf46Ba81eEe5a41f0dF72d35cC75C18a
  */
 export function getPaymentSplitterAddress(chainId: number): `0x${string}` | null {
-  // TODO: Set these addresses after deployment
-  const addresses: Record<number, `0x${string}`> = {
+  const addresses: Record<number, `0x${string}` | undefined> = {
     // Alfajores testnet
-    44787: process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS_ALFAJORES as `0x${string}`,
-    // Celo Mainnet
-    42220: process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS_MAINNET as `0x${string}`,
+    44787: process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS_ALFAJORES as `0x${string}` | undefined,
+    // Celo Mainnet - default to deployed contract address
+    42220: (process.env.NEXT_PUBLIC_PAYMENT_SPLITTER_ADDRESS_MAINNET || 
+            '0x8fbfb62ABf46Ba81eEe5a41f0dF72d35cC75C18a') as `0x${string}`,
   };
 
   const address = addresses[chainId];

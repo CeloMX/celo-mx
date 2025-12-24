@@ -237,7 +237,7 @@ model Purchase {
   txHash          String   @unique
   amount          Int
   selectedSize    String?
-  merchantAddress String   @default("0x795df83a989c74832b2D108FF8200989B59FbaCf")
+  merchantAddress String   @default("0x8fbfb62ABf46Ba81eEe5a41f0dF72d35cC75C18a")
   status          String   @default("completed")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now())

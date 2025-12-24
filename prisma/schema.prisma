@@ -232,34 +232,34 @@ model MerchItem {
 }
 
 model Purchase {
-  id              String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  id              String        @id @default(dbgenerated("(gen_random_uuid())::text"))
   userid          String
   itemid          String
-  txhash          String    @unique(map: "purchase_txhash_key")
+  txhash          String        @unique(map: "purchase_txhash_key")
   amount          Int
   selectedsize    String?
-  merchantaddress String    @default("0x795df83a989c74832b2D108FF8200989B59FbaCf")
-  status          String    @default("completed")
-  createdat       DateTime  @default(now()) @db.Timestamptz(6)
-  updatedat       DateTime  @default(now()) @db.Timestamptz(6)
-  MerchItem       MerchItem @relation(fields: [itemid], references: [id], map: "purchase_item_fkey")
-  User            User      @relation(fields: [userid], references: [id], map: "purchase_user_fkey")
+  merchantaddress String        @default("0x8fbfb62ABf46Ba81eEe5a41f0dF72d35cC75C18a")
+  status          String        @default("completed")
+  createdat       DateTime      @default(now()) @db.Timestamptz(6)
+  updatedat       DateTime      @default(now()) @db.Timestamptz(6)
+  MerchItem       MerchItem     @relation(fields: [itemid], references: [id], map: "purchase_item_fkey")
+  User            User          @relation(fields: [userid], references: [id], map: "purchase_user_fkey")
   ShippingInfo    ShippingInfo?
 }
 
 model ShippingInfo {
-  id            String   @id @default(dbgenerated("(gen_random_uuid())::text"))
-  purchaseId    String   @unique
-  firstName     String
-  lastName      String
-  email         String
-  address       String
-  addressLine2  String?
-  postalCode    String
-  city          String
-  phone         String
-  createdAt     DateTime @default(now()) @db.Timestamptz(6)
-  Purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  id           String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  purchaseId   String   @unique
+  firstName    String
+  lastName     String
+  email        String
+  address      String
+  addressLine2 String?
+  postalCode   String
+  city         String
+  phone        String
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  Purchase     Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 }
 
 enum LessonProgressStatus {
@@ -286,13 +286,13 @@ enum Visibility {
 }
 
 model BuildathonProject {
-  id            String   @id @default(dbgenerated("gen_random_uuid()::text"))
-  teamName      String
-  teamMembers   String
-  githubRepo    String?
-  karmaGapLink  String?
-  createdAt     DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  id           String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  teamName     String
+  teamMembers  String
+  githubRepo   String?
+  karmaGapLink String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@map("BuildathonProject")
 }

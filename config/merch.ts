@@ -21,6 +21,7 @@ export const MERCHANT_ADDRESS =
 // $10 goes to treasury, $35 goes to artist (from $45 total)
 
 // Treasury address (receives $10 from $45 = 22.22% of split payments)
+// This is Celo Mexico's treasury wallet address
 export const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS || '0x795df83a989c74832b2D108FF8200989B59FbaCf';
 
 // Artist address (receives $35 from $45 = 77.78% of split payments)

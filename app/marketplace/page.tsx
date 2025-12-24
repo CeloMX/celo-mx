@@ -7,19 +7,21 @@ import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useAuth } from '@/hooks/useAuth';
 import { usePrivy } from '@privy-io/react-auth';
-import { MERCHANT_ADDRESS, shouldUseFeeSplit, PAYMENT_SPLITTER_ADDRESS } from '@/config/merch';
+import { MERCHANT_ADDRESS, shouldUseFeeSplit, PAYMENT_SPLITTER_ADDRESS, IS_TEST_MODE } from '@/config/merch';
 
 /**
  * Get the price for an item
  * Axolote navideño uses 45 USDT/cUSD (stable 1:1 with USD)
  * Other items use their database price
+ * In test mode, axolote price is reduced to 0.01 USD for testing
  * @param _paymentMethod - Payment method (kept for API consistency, not used internally)
  */
 // eslint-disable-next-line no-unused-vars
 const getItemPrice = (item: MerchItem, _paymentMethod: 'CMT' | 'USDT' | 'CUSD'): number => {
   const isAxolote = shouldUseFeeSplit(item.id, item.tag);
   if (isAxolote) {
-    return 45; // Precio fijo de 45 USDT/cUSD para el axolote navideño
+    // In test mode, use 0.01 USD instead of 45 USD for testing
+    return IS_TEST_MODE ? 0.01 : 45; // Precio fijo de 45 USDT/cUSD para el axolote navideño (0.01 en modo test)
   }
   // Para otros artículos, usar el precio de la base de datos
   return item.price;
@@ -303,6 +305,9 @@ function MarketplacePageInner() {
     let txHash: string | null = null;
 
     try {
+      if (IS_TEST_MODE && shouldUseFeeSplit(item.id, item.tag)) {
+        console.log(`[MERCH] 🧪 TEST MODE: Price reduced from 45 to 0.01 USD for testing`);
+      }
       console.log(`[MERCH] Starting real ${tokenSymbol} transfer:`, {
         item: item.name,
         price: price,
@@ -312,6 +317,7 @@ function MarketplacePageInner() {
         to: MERCHANT_ADDRESS,
         tokenAddress: tokenConfig.address,
         shippingData,
+        testMode: IS_TEST_MODE,
       });
 
       if (payerType === 'SMART') {
@@ -441,7 +447,15 @@ function MarketplacePageInner() {
         throw new Error('Transaction failed - no hash returned');
       }
 
-      console.log(`[MERCH] ✅ Real ${tokenSymbol} transfer completed:`, txHash);
+      // Ensure txHash is a valid string
+      const validTxHash = typeof txHash === 'string' && txHash.startsWith('0x') ? txHash : String(txHash);
+      
+      if (!validTxHash || validTxHash === '0x' || validTxHash.length < 10) {
+        console.error('[MERCH] Invalid txHash:', txHash);
+        throw new Error('Transaction hash inválido');
+      }
+
+      console.log(`[MERCH] ✅ Real ${tokenSymbol} transfer completed:`, validTxHash);
 
       const selectedSize = (item.sizes && item.sizes.length)
         ? (selectedSizes[item.id] || ((/shirt/i.test(item.id) || /shirt/i.test(item.name)) ? 'XL' : undefined))
@@ -451,7 +465,7 @@ function MarketplacePageInner() {
       // Ensure all required fields are present
       const purchasePayload = {
         itemId: item.id,
-        txHash: txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+        txHash: validTxHash,
         amount: price,
         paymentMethod: tokenSymbol,
         selectedSize: selectedSize || null,
@@ -484,11 +498,11 @@ function MarketplacePageInner() {
 
       const updatedPurchases: Record<string, { txHash: string; timestamp: number }> = {
         ...purchases,
-        [item.id]: { txHash: txHash as string, timestamp: Date.now() },
+        [item.id]: { txHash: validTxHash, timestamp: Date.now() },
       };
       setPurchases(updatedPurchases);
       showModal(
-        `✓ Compra exitosa! ${price} ${tokenSymbol} transferidos.\n\nTransacción: ${txHash}\n\nVer en Celoscan: https://celoscan.io/tx/${txHash}`,
+        `✓ Compra exitosa! ${price} ${tokenSymbol} transferidos.\n\nTransacción: ${validTxHash}\n\nVer en Celoscan: https://celoscan.io/tx/${validTxHash}`,
         'success',
         'Compra exitosa'
       );
@@ -648,6 +662,26 @@ function MarketplacePageInner() {
             Mis Compras
           </button>
         </div>
+
+        {/* Test Mode Banner */}
+        {IS_TEST_MODE && (
+          <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">🧪</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-yellow-600 dark:text-yellow-400 mb-1">
+                  Modo de Prueba Activado
+                </h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Los precios están reducidos para pruebas. El axolote navideño cuesta <strong>0.01 USD</strong> en lugar de 45 USD.
+                  Las transacciones se ejecutarán normalmente pero con montos de prueba.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Balance Display */}
         {isSmartAccountReady && smartAccountAddress && (
@@ -1079,18 +1113,33 @@ function MarketplacePageInner() {
           </div>
           
           {/* Celoscan button */}
-          {modal.type === 'success' && modal.message.includes('celoscan.io') && (
-            <div className="pt-2 border-t border-celo-border/30">
-              <a
-                href={modal.message.match(/https:\/\/celoscan\.io\/tx\/[a-fA-F0-9]+/)?.[0] || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40 w-full justify-center"
-              >
-                Ver en Celoscan <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          )}
+          {modal.type === 'success' && modal.message.includes('celoscan.io') && (() => {
+            // Extract transaction hash from message - improved regex to match full hash (0x + 64 hex chars)
+            const celoscanUrlMatch = modal.message.match(/https:\/\/celoscan\.io\/tx\/(0x[a-fA-F0-9]{64})/i);
+            const txHashMatch = modal.message.match(/Transacción:\s*(0x[a-fA-F0-9]{64})/i);
+            
+            // Try to get hash from URL first, then from "Transacción:" line
+            const txHash = celoscanUrlMatch?.[1] || txHashMatch?.[1] || null;
+            const celoscanUrl = txHash ? `https://celoscan.io/tx/${txHash}` : null;
+            
+            if (!celoscanUrl || !txHash) {
+              console.warn('[MODAL] Could not extract txHash from message:', modal.message);
+              return null;
+            }
+            
+            return (
+              <div className="pt-2 border-t border-celo-border/30">
+                <a
+                  href={celoscanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-celoLegacy-yellow text-black font-semibold rounded-xl hover:opacity-90 transition border border-celo-border/40 w-full justify-center"
+                >
+                  Ver en Celoscan <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            );
+          })()}
         </div>
       </Modal>
 
